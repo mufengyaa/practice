@@ -4,9 +4,9 @@ refresh:refresh.c
 	gcc -o $@ $^ -std=c99
 
 .PHONY:clean_test
-clean:
+clean_test:
 	rm -rf test
 
 .PHONY:clean_refresh
-clean:
+clean_refresh:
 	rm -rf refresh
