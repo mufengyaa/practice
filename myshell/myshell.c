@@ -13,6 +13,7 @@ char cmd[num];
 char* options[size];
 
 int main(){
+  extern char** environ;
   while(1){
     printf("root@localhost myshell#");
     fflush(stdout);
@@ -32,6 +33,12 @@ int main(){
         break;
       }
     }
+    if(strcmp(options[0],"export")==0){
+      char* my_env=(char*)malloc(sizeof(char)*sizeof(options[1])); 
+      strcpy(my_env,options[1]);
+      putenv(my_env);
+      continue;
+    }
    // for(i=0;options[i];i++){
    //   printf("%s\n",options[i]);
    // }
@@ -45,7 +52,7 @@ int main(){
     pid_t id=fork();
     if(id==0){
       printf("im child\n");
-      execvp(options[0],options);
+      execvpe(options[0],options,environ);
       exit(1);
     }
     else{
