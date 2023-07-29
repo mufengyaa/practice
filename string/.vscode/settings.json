@@ -1,0 +1,10 @@
+{
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.default.compilerPath": "D:\\mingw\\mingw64\\bin\\g++",
+    "files.associations": {
+        "*.hpp": "cpp",
+        "*.cpp": "cpp",
+        "iosfwd": "cpp",
+        "ostream": "cpp"
+    }
+}
