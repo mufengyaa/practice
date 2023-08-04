@@ -78,9 +78,16 @@ void test6(){
     s3=s1;
     cout<<s3<<endl;
 }
+void test7(){
+    mystring::string s1("hello");
+    mystring::string s2;
+    s2=s1;
+    cout<<s2<<endl;
+}
 
 int main()
 {
     test6();
+    test7();
     return 0;
 }

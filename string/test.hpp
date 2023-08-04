@@ -10,7 +10,6 @@ namespace mystring
     {
     public:
         typedef char *iterator;
-
         // iterator
 
         iterator begin() const
@@ -54,19 +53,33 @@ namespace mystring
         }
         string(const string &s) // 拷贝构造
         {
+            //传统写法
             _str = new char[s._size];
             // strcpy(_str, s._str);
             memcpy(_str, s._str, s._size);
             _size = s._size;
             _capacity = s._capacity;
+
+            // //现代写法
+            // string tmp(s._str); //使用_str直接构造,当中间有\0时就只能拷贝一部分 -》 不建议使用
+            // swap(tmp);  //这里由于没有处理自己(也就是this),成员数据可能会是随机值,换给tmp后,tmp调用析构函数时,就会释放一段不存在的空间->错误
+            // //所以需要初始化this的成员
+
         }
-        string &operator=(const string &s)
+        //传统写法
+        // string &operator=(const string &s)
+        // {
+        //     _str = new char[s._size];
+        //     // strcpy(_str, s._str);
+        //     memcpy(_str, s._str, s._size);
+        //     _size = s._size;
+        //     _capacity = s._capacity;
+        //     return *this;
+        // }
+        //现代写法
+        string &operator=(string s)
         {
-            _str = new char[s._size];
-            // strcpy(_str, s._str);
-            memcpy(_str, s._str, s._size);
-            _size = s._size;
-            _capacity = s._capacity;
+            swap(s);
             return *this;
         }
         ~string()
