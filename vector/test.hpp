@@ -2,14 +2,13 @@
 #include <assert.h>
 #include <string.h>
 #include <string>
-#include <vector>
 
 using namespace std;
 
-namespace myvector
+namespace bit
 {
     template <class T>
-    class vector
+    class myvector
     {
     public:
         // Vector的迭代器是一个原生指针
@@ -24,57 +23,67 @@ namespace myvector
         {
             return _finish;
         }
-        const_iterator cbegin()
+        const_iterator begin() const
         {
             return _start;
         }
-        const_iterator cend() const
+        const_iterator end() const
         {
             return _finish;
         }
 
         // construct and destroy
 
-        vector()
+        myvector()
             : _start(nullptr), _finish(nullptr), _endOfStorage(nullptr){};
-        vector(int n, const T &value = T())  //如果这里是size_t类型的n
-        //当传入参数都是整数时,会认为俩都是int,优先匹配两个参数是同样类型的模板函数
-        //但int无法解引用,就会报错
-        //所以这里的类型改为int,就可以匹配上了
-        : _start(nullptr), _finish(nullptr), _endOfStorage(nullptr)
+        myvector(int n, const T &value = T()) // 如果这里是size_t类型的n
+                                              // 当传入参数都是整数时,会认为俩都是int,优先匹配两个参数是同样类型的模板函数
+                                              // 但int无法解引用,就会报错
+                                              // 所以这里的类型改为int,就可以匹配上了
+            : _start(nullptr), _finish(nullptr), _endOfStorage(nullptr)
         {
             _start = new T[n];
+            for (size_t i = 0; i < n; i++)
+            {
+                _start[i] = value;
+            }
             _finish = _endOfStorage = _start + n;
         }
 
-        template <class InputIterator>  //模板函数,为了支持其他类型的迭代器(string等)
-        vector(InputIterator first, InputIterator last)  
+        template <class InputIterator> // 模板函数,为了支持其他类型的迭代器(string等)
+        myvector(InputIterator first, InputIterator last)
         {
-            for(auto begin=first;begin!=last;++begin){
+            int n = last - first;
+            _finish = _start = new T[n];
+            _endOfStorage = _start + n;
+            for (auto begin = first; begin != last; ++begin)
+            {
                 push_back(*begin);
             }
         }
 
-        vector(const vector<T> &v)
+        myvector(const myvector<T> &v)
             : _start(nullptr), _finish(nullptr), _endOfStorage(nullptr)
         {
-            // _start = new T(v.capacity());
-            // memcpy(_start, v._start);
-            // _finish = _start + v.size();
-            // _endOfStorage = _start + v.capacity();
             reserve(v.capacity());
-            for (auto c : v)
-            {
-                push_back(c);
+
+            // auto it = v.cbegin();
+            // for (; it != v.cend(); ++it)
+            // {
+            //     push_back(*it);
+            // }
+
+            for(auto it: v){
+                push_back(it);
             }
         }
-        vector<T> &operator=(vector<T> v) // v传进来首先会进行拷贝构造,所以形参和实参空间不同
+        myvector<T> &operator=(myvector<T> v) // v传进来首先会进行拷贝构造,所以形参和实参空间不同
         {
             swap(v);
             return *this;
         }
 
-        ~vector()
+        ~myvector()
         {
             delete[] _start;
             _start = _finish = _endOfStorage = nullptr;
@@ -96,10 +105,11 @@ namespace myvector
             {
                 int sz = size();
                 T *tmp = new T[n];
-                //memcpy(tmp,_start,sizeof(T)*sz);  //如果vector中的元素是自定义类型(string/vector),那这里就是浅拷贝(按字节拷贝)
-                //为了进行深拷贝,可以去赋值重载(内部是深拷贝)(拷贝构造不行,无法调用)
-                for(size_t i=0;i<sz;++i){
-                    tmp[i]=_start[i];
+                // memcpy(tmp,_start,sizeof(T)*sz);  //如果vector中的元素是自定义类型(string/vector),那这里就是浅拷贝(按字节拷贝)
+                // 为了进行深拷贝,可以去赋值重载(内部是深拷贝)(拷贝构造不行,无法调用)
+                for (size_t i = 0; i < sz; ++i)
+                {
+                    tmp[i] = _start[i];
                 }
                 delete[] _start;
                 _start = tmp;
@@ -117,6 +127,7 @@ namespace myvector
                 {
                     *begin = value;
                 }
+                _finish = _start + n;
             }
             else
             {
@@ -145,10 +156,10 @@ namespace myvector
         }
         void pop_back()
         {
-            _start = (_start);
+            _start = erase(_start);
         }
 
-        void swap(vector<T> &v)
+        void swap(myvector<T> &v)
         {
             std::swap(_start, v._start);
             std::swap(_finish, v._finish);
@@ -166,7 +177,7 @@ namespace myvector
             iterator end = _finish - 1;
             while (end >= pos)
             {
-                *(end + len) = *end;
+                *(end + 1) = *end;
                 --end;
             }
             *pos = x;
