@@ -64,11 +64,11 @@ namespace bit
             _pNode = _pNode->_ppre;
             return tmp;
         }
-        bool operator!=(const Self &l)
+        bool operator!=(const Self &l) const
         {
             return _pNode != l._pNode;
         }
-        bool operator==(const Self &l)
+        bool operator==(const Self &l) const
         {
             return _pNode == l._pNode;
         }
@@ -84,6 +84,10 @@ namespace bit
     public: // 两种迭代器
         typedef ListIterator<T, T &, T *> iterator;
         typedef ListIterator<T, const T &, const T &> const_iterator;
+
+#include "reverse_iteritor.hpp" //反向迭代器
+        typedef myreverse_iterator<iterator, T &, T *> reverse_iterator;
+        typedef myreverse_iterator<const_iterator, const T &, const T *> const_reverse_iterator;
 
     public:
         // List的构造
@@ -154,6 +158,24 @@ namespace bit
             return const_iterator(_pHead);
         }
 
+        // List reverse_Iterator
+        reverse_iterator rbegin()
+        {
+            return reverse_iterator(end());
+        }
+        reverse_iterator rend()
+        {
+            return reverse_iterator(begin());
+        }
+        const_reverse_iterator rbegin() const
+        {
+            return const_reverse_iterator(end());
+        }
+        const_reverse_iterator rend() const
+        {
+            return const_reverse_iterator(begin());
+        }
+
         // List Capacity
         size_t size() const
         {
@@ -165,16 +187,20 @@ namespace bit
         }
 
         // List Access
-        T &front(){
+        T &front()
+        {
             return *begin();
         }
-        const T &front() const{
+        const T &front() const
+        {
             return *begin();
         }
-        T &back(){
+        T &back()
+        {
             return *(--end());
         }
-        const T &back() const{
+        const T &back() const
+        {
             return *(--end());
         }
 
