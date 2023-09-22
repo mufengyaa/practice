@@ -1,0 +1,67 @@
+#include<set>
+#include<iostream>
+using namespace std;
+
+void test1() {
+	set<int> s;
+	s.insert(1);
+	s.insert(1);
+	s.insert(7);
+	s.insert(2);
+	s.insert(1);
+	s.insert(3);
+	for (auto c : s) {
+		cout << c << " ";
+	}
+	cout << endl;
+
+	if (s.find(3)!=s.end()) {
+		cout << "success" << endl;
+	}
+	if (s.count(3)) {
+		cout << "success" << endl;
+	}
+}
+void test2() {
+	multiset<int> s;
+	s.insert(7);
+	s.insert(1);
+	s.insert(7);
+	s.insert(7);
+	s.insert(5);
+	s.insert(3);
+	//for (auto c : s) {
+	//	cout << c << " ";
+	//}
+	//cout << endl;
+
+	//auto it = s.find(7);
+	//while ( it != s.end()) {
+	//	cout << *it << " ";
+	//	++it;
+	//}
+	//cout <<  endl;
+	cout << s.count(7) << endl;
+}
+
+typedef std::multiset<int>::iterator It;
+void test3() {
+	multiset<int> s;
+	s.insert(7);
+	s.insert(1);
+	s.insert(7);
+	s.insert(7);
+	s.insert(5);
+	s.insert(3);
+	std::pair<It, It> ret = s.equal_range(7); //      ^        ^
+
+	s.erase(ret.first, ret.second);
+
+	for (auto tmp : s) {
+		cout << tmp << " ";
+	}
+}
+int main() {
+	test3();
+	return 0;
+}
