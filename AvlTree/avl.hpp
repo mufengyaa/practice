@@ -3,6 +3,7 @@
 #include <string>
 #include <queue>
 #include <cassert>
+#include <cstdlib>
 
 namespace my_AvlTree
 {
@@ -37,15 +38,20 @@ namespace my_AvlTree
         bool Insert(const T &data);
 
         // AVL树的验证
-        bool NIsAvlTree()
+        bool IsAvlTree()
         {
-            return _NIsAvlTree(_root);
+            return _IsAvlTree(_root);
         }
+
         void levelOrder();
+        size_t Height()
+        {
+            return _Height(_root);
+        }
 
     private:
         // 根据AVL树的概念验证pRoot是否为有效的AVL树
-        bool _NIsAvlTree(Node *root);
+        bool _IsAvlTree(Node *root);
         size_t _Height(Node *root);
         // 右单旋
         void RotateR(Node *parent);
@@ -109,6 +115,7 @@ namespace my_AvlTree
         else
         {
             Node *cur = _root, *parent = cur, *newnode = nullptr;
+            // 找到插入位置
             while (cur)
             {
                 if (data > cur->_data)
@@ -126,6 +133,7 @@ namespace my_AvlTree
                     return false;
                 }
             }
+            // 插入+改父亲bf
             newnode = new Node(data);
             if (data < parent->_data)
             {
@@ -140,42 +148,53 @@ namespace my_AvlTree
                 newnode->_parent = parent;
             }
 
+            // std::cout << "parent:" << parent->_data << " "
+            //           << "newnode:" << newnode->_data << std::endl;
+
             // 维护bf
             cur = parent;
-            Node *pnode = nullptr;
             while (cur != _root)
             {
-                if (cur == 0)
+                Node *pnode = cur->_parent;
+                // 更新bf
+                if (pnode->_left == cur)
+                {
+                    --pnode->_bf;
+                }
+                else
+                {
+                    ++pnode->_bf;
+                }
+                // 判断是否继续往上更新
+                if (cur->_bf == 0)
                 {
                     break;
                 }
                 else
                 {
-                    pnode = cur->_parent;
-                    if (pnode->_left == cur)
-                    {
-                        --pnode->_bf;
-                    }
-                    else
-                    {
-                        ++pnode->_bf;
-                    }
-                    cur = pnode;
-                }
-            }
-
-            // 判断是否需要旋转
-            bool flag = NIsAvlTree();
-            // std::cout<<flag<<std::endl;
-            if (flag)
-            {
-                // 找到不符合的结点
-                pnode = newnode->_parent;
-                cur = newnode;
-                while (pnode)
-                {
                     if (pnode->_bf == 2 || pnode->_bf == -2)
                     {
+                        // pnode就是不合法的结点,然后判断它该怎么调整
+                        if (pnode->_bf == -2 && cur->_bf == -1)
+                        {
+                            // 右单旋
+                            RotateR(pnode);
+                        }
+                        if (pnode->_bf == 2 && cur->_bf == 1)
+                        {
+                            // 左单旋
+                            RotateL(pnode);
+                        }
+                        if (pnode->_bf == -2 && cur->_bf == 1)
+                        {
+                            // 左右双旋
+                            RotateLR(pnode);
+                        }
+                        if (pnode->_bf == 2 && cur->_bf == -1)
+                        {
+                            // 右左双旋
+                            RotateRL(pnode);
+                        }
                         break;
                     }
                     else
@@ -184,50 +203,29 @@ namespace my_AvlTree
                         pnode = pnode->_parent;
                     }
                 }
-
-                // if(pnode!=nullptr){
-                //     std::cout<<"pnode:"<<pnode->_data<<" "<<"cur:"<<cur->_data<<std::endl;
-                //     std::cout<<"pnode:"<<pnode->_bf<<" "<<"cur:"<<cur->_bf<<std::endl;
-                // }
-
-                // pnode就是不合法的结点,然后判断它该怎么调整
-                if (pnode->_bf == -2 && cur->_bf == -1)
-                {
-                    // 右单旋
-                    RotateR(pnode);
-                }
-                if (pnode->_bf == 2 && cur->_bf == 1)
-                {
-                    // 左单旋
-                    RotateL(pnode);
-                }
-                if (pnode->_bf == -2 && cur->_bf == 1)
-                {
-                    // 左右双旋
-                    RotateLR(pnode);
-                }
-                if (pnode->_bf == 2 && cur->_bf == -1)
-                {
-                    // 右左双旋
-                    RotateRL(pnode);
-                }
             }
         }
         return true;
     }
 
     template <class T>
-    bool AvlTree<T>::_NIsAvlTree(Node *root)
+    bool AvlTree<T>::_IsAvlTree(Node *root)
     {
         if (root == nullptr)
         {
-            return false;
-        }
-        if (root->_bf == 2 || root->_bf == -2)
-        {
             return true;
         }
-        return _NIsAvlTree(root->_left) || _NIsAvlTree(root->_right);
+        int left_height = _Height(root->_left);
+        int right_height = _Height(root->_right);
+        if (right_height - left_height != root->_bf)
+        {
+            std::cout << right_height << std::endl;
+            std::cout << left_height << std::endl;
+            std::cout << root->_bf << std::endl;
+            std::cout << "平衡因子异常" << std::endl;
+            return false;
+        }
+        return abs(right_height - left_height) < 2 && _IsAvlTree(root->_left) && _IsAvlTree(root->_right);
     }
 
     template <class T>
@@ -324,7 +322,7 @@ namespace my_AvlTree
         int bf_comp = curright->_bf; // 用于判断插入结点的左右位置
 
         RotateL(parent->_left); // 让cur成为curright的左子树
-        RotateR(parent);         // 让parent成为curright的右子树
+        RotateR(parent);        // 让parent成为curright的右子树
 
         // curright是旋转后子树的根结点
         // 最终让curright的左子树给了cur的右子树,curright的右子树给了parent的左子树
@@ -372,8 +370,8 @@ namespace my_AvlTree
         Node *cur = parent->_right, *curleft = cur->_left;
 
         int bf_comp = curleft->_bf; // 用于判断插入结点的左右位置
-        RotateR(parent->_right); // 让cur成为curleft的右子树
-        RotateL(parent);        // 让parent成为curleft的左子树
+        RotateR(parent->_right);    // 让cur成为curleft的右子树
+        RotateL(parent);            // 让parent成为curleft的左子树
 
         // curleft是旋转后子树的根结点
         // 最终让原curleft的右子树给了cur的左子树,curleft的左子树给了parent的右子树

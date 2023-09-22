@@ -14,7 +14,7 @@ void test1()
     t.Insert(67);
     t.Insert(23);
     t.levelOrder();
-    cout << t.NIsAvlTree() << endl;
+    //cout << t.IsAvlTree() << endl;
 }
 int main()
 {
