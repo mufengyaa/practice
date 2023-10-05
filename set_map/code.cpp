@@ -76,8 +76,42 @@ void test2()
     cout << endl;
 }
 
+void test3()
+{
+    my_set::set<int> s;
+    s.insert(8);
+    s.insert(4);
+    s.insert(5);
+    s.insert(4);
+    for (auto tmp : s)
+    {
+        cout << tmp << " ";
+    }
+}
+void test4()
+{
+    my_map::map<string, string> m;
+    m.insert(make_pair("sort", "排序"));
+    m.insert(make_pair("apple", "苹果"));
+    m.insert(make_pair("map", "地图"));
+    for (auto tmp : m)
+    {
+        cout << tmp.first << ":" << tmp.second << endl;
+    }
+}
+void test5()
+{
+    my_map::map<string, string> m;
+    m["sort"] = "排序";
+    m["apple"] = "苹果";
+    m["map"] = "地图";
+    for (auto tmp : m)
+    {
+        cout << tmp.first << ":" << tmp.second << endl;
+    }
+}
 int main()
 {
-    test2();
+    test5();
     return 0;
 }

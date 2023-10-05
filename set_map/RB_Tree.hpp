@@ -20,17 +20,17 @@ namespace my_RB_Tree
     template <class T>
     struct RBTreeNode // 结点
     {
-        RBTreeNode(const T &data)
+        RBTreeNode(const T& data)
             : _left(nullptr),
-              _right(nullptr),
-              _parent(nullptr),
-              _col(red),
-              _data(data)
+            _right(nullptr),
+            _parent(nullptr),
+            _col(red),
+            _data(data)
         {
         }
-        RBTreeNode *_left;
-        RBTreeNode *_right;
-        RBTreeNode *_parent;
+        RBTreeNode* _left;
+        RBTreeNode* _right;
+        RBTreeNode* _parent;
         colour _col;
         T _data;
     };
@@ -40,24 +40,31 @@ namespace my_RB_Tree
     {
         typedef RBTreeNode<T> Node;
         typedef RBTreeIterator<T, Ptr, Ref> Self;
+        //为了可以能让普通迭代器初始化const迭代器,需要来一个普通迭代器对象
+        typedef RBTreeIterator<T, T*, T&> iterator;
+        Node* _pNode;
 
-        RBTreeIterator(Node *pNode)
+        RBTreeIterator(Node* pNode)
             : _pNode(pNode)
+        {
+        }
+        RBTreeIterator(const iterator& it) // const迭代器时,它是一个初始化;普通迭代器时,它是一个拷贝
+            : _pNode(it._pNode)
         {
         }
 
         // 让迭代器具有类似指针的行为
-        Ref &operator*()
+        Ref operator*()
         {
             return _pNode->_data;
         }
-        Ptr *operator->()
+        Ptr operator->()
         {
             return &(_pNode->_data);
         }
 
         // 让迭代器可以移动：前置/后置++
-        Self &operator++()
+        Self& operator++()
         {
             Increament();
             return *this;
@@ -69,7 +76,7 @@ namespace my_RB_Tree
             return tmp;
         }
         // 让迭代器可以移动：前置/后置--
-        Self &operator--()
+        Self& operator--()
         {
             DeIncreament();
             return *this;
@@ -82,11 +89,11 @@ namespace my_RB_Tree
         }
 
         // 让迭代器可以比较
-        bool operator!=(const Self &s) const
+        bool operator!=(const Self& s) const
         {
             return _pNode != s._pNode;
         }
-        bool operator==(const Self &s) const
+        bool operator==(const Self& s) const
         {
             return _pNode == s._pNode;
         }
@@ -95,7 +102,6 @@ namespace my_RB_Tree
         void Increament();
         void DeIncreament();
 
-        Node *_pNode;
     };
 
     // 为了后序封装map和set，本代码的红黑树会有一个作为哨兵位的头结点
@@ -105,8 +111,8 @@ namespace my_RB_Tree
     {
     public:
         typedef RBTreeNode<T> Node;
-        typedef RBTreeIterator<T, T *, T> iterator;
-        typedef RBTreeIterator<T, const T *, const T> const_iterator;
+        typedef RBTreeIterator<T, T*, T&> iterator;
+        typedef RBTreeIterator<T, const T*, const T&> const_iterator;
 
     public:
         RBTree()
@@ -118,16 +124,16 @@ namespace my_RB_Tree
         }
 
         // 在红黑树中插入值为data的节点，插入成功返回true，否则返回false
-        std::pair<iterator, bool> Insert(const T &data);
+        std::pair<iterator, bool> Insert(const T& data);
 
         // 检测红黑树中是否存在值为data的节点，存在返回该节点的地址，否则返回nullptr
-        Node *Find(const K &data);
+        Node* Find(const K& data);
 
         // 获取红黑树最左侧节点
-        Node *LeftMost();
+        Node* LeftMost() const;
 
         // 获取红黑树最右侧节点
-        Node *RightMost();
+        Node* RightMost() const;
 
         iterator begin()
         {
@@ -149,7 +155,7 @@ namespace my_RB_Tree
         // 检测红黑树是否为有效的红黑树，注意：其内部主要依靠_IsValidRBTRee函数检测
         bool IsValidRBTRee()
         {
-            Node *root = _pHead->_parent;
+            Node* root = _pHead->_parent;
             if (root->_col == red)
             {
                 return false;
@@ -160,17 +166,17 @@ namespace my_RB_Tree
         }
 
     private:
-        bool _IsValidRBTRee(Node *pRoot, size_t blackCount, size_t pathBlack);
+        bool _IsValidRBTRee(Node* pRoot, size_t blackCount, size_t pathBlack);
         // 左单旋
-        void RotateL(Node *pParent);
+        void RotateL(Node* pParent);
         // 右单旋
-        void RotateR(Node *pParent);
+        void RotateR(Node* pParent);
         // 为了操作树简单起见：获取根节点
-        Node *&GetRoot()
+        Node*& GetRoot()
         {
             return _pHead->_parent;
         }
-        void find_blacknode(int &count, Node *root)
+        void find_blacknode(int& count, Node* root)
         {
             if (root == nullptr)
             {
@@ -185,13 +191,13 @@ namespace my_RB_Tree
         }
 
     private:
-        Node *_pHead = nullptr;
+        Node* _pHead = nullptr;
     };
 
     template <class K, class T, class KeyOfT>
-    void RBTree<K, T, KeyOfT>::RotateL(Node *pParent)
+    void RBTree<K, T, KeyOfT>::RotateL(Node* pParent)
     {
-        Node *cur = pParent->_right, *curleft = cur->_left;
+        Node* cur = pParent->_right, * curleft = cur->_left;
 
         // 连接p和cur左树,因为该位置被p占据
         pParent->_right = curleft;
@@ -203,7 +209,7 @@ namespace my_RB_Tree
         // 连接父结点
         if (pParent->_parent != _pHead)
         {
-            Node *ppnode = pParent->_parent;
+            Node* ppnode = pParent->_parent;
             if (ppnode->_left == pParent)
             {
                 ppnode->_left = cur;
@@ -224,9 +230,9 @@ namespace my_RB_Tree
         cur->_left = pParent;
     }
     template <class K, class T, class KeyOfT>
-    void RBTree<K, T, KeyOfT>::RotateR(Node *pParent)
+    void RBTree<K, T, KeyOfT>::RotateR(Node* pParent)
     {
-        Node *cur = pParent->_left, *curright = cur->_right;
+        Node* cur = pParent->_left, * curright = cur->_right;
 
         // 连接p和cur右树,因为该位置被p占据
         pParent->_left = curright;
@@ -238,7 +244,7 @@ namespace my_RB_Tree
         // 连接父结点
         if (pParent->_parent != _pHead)
         {
-            Node *ppnode = pParent->_parent;
+            Node* ppnode = pParent->_parent;
             if (ppnode->_left == pParent)
             {
                 ppnode->_left = cur;
@@ -260,9 +266,9 @@ namespace my_RB_Tree
     }
 
     template <class K, class T, class KeyOfT>
-    typename RBTree<K, T, KeyOfT>::Node *RBTree<K, T, KeyOfT>::LeftMost()
+    typename RBTree<K, T, KeyOfT>::Node* RBTree<K, T, KeyOfT>::LeftMost() const
     {
-        Node *cur = _pHead->_parent;
+        Node* cur = _pHead->_parent;
         while (cur->_left)
         {
             cur = cur->_left;
@@ -270,9 +276,9 @@ namespace my_RB_Tree
         return cur;
     }
     template <class K, class T, class KeyOfT>
-    typename RBTree<K, T, KeyOfT>::Node *RBTree<K, T, KeyOfT>::RightMost()
+    typename RBTree<K, T, KeyOfT>::Node* RBTree<K, T, KeyOfT>::RightMost() const
     {
-        Node *cur = _pHead->_parent;
+        Node* cur = _pHead->_parent;
         while (cur->_right)
         {
             cur = cur->_right;
@@ -281,9 +287,9 @@ namespace my_RB_Tree
     }
 
     template <class K, class T, class KeyOfT>
-    typename RBTree<K, T, KeyOfT>::Node *RBTree<K, T, KeyOfT>::Find(const K &data) // 注意这里,
+    typename RBTree<K, T, KeyOfT>::Node* RBTree<K, T, KeyOfT>::Find(const K& data) // 注意这里,
     {
-        Node *cur = _pHead->_parent;
+        Node* cur = _pHead->_parent;
         KeyOfT kot;
         while (cur)
         {
@@ -304,11 +310,11 @@ namespace my_RB_Tree
     }
 
     template <class K, class T, class KeyOfT>
-    std::pair<typename RBTree<K, T, KeyOfT>::iterator, bool> RBTree<K, T, KeyOfT>::Insert(const T &data) // 为了和map适配,要返回pair类型
+    std::pair<typename RBTree<K, T, KeyOfT>::iterator, bool> RBTree<K, T, KeyOfT>::Insert(const T& data) // 为了和map适配,要返回pair类型
                                                                                                          //(first是插入元素所在的迭代器,second是bool值,判断是否成功插入)
     {
         KeyOfT kot;
-        Node *newnode = nullptr;
+        Node* newnode = nullptr;
         if (_pHead->_parent == nullptr)
         {
             newnode = new Node(data);
@@ -319,7 +325,7 @@ namespace my_RB_Tree
         }
         else
         {
-            Node *cur = _pHead->_parent, *parent = cur;
+            Node* cur = _pHead->_parent, * parent = cur;
             while (cur)
             {
                 if (kot(data) > kot(cur->_data))
@@ -350,14 +356,14 @@ namespace my_RB_Tree
                 parent->_right = cur;
             }
 
-            Node *grandfather = nullptr;
-            while (parent != _pHead && parent->_col == red) 
+            Node* grandfather = nullptr;
+            while (parent != _pHead && parent->_col == red)
             {
                 grandfather = parent->_parent; // 因为父结点是红色,所以肯定有爷爷结点(注意红黑树规则:根结点必须是黑色)
 
                 if (grandfather->_left == parent) // 确定父亲位置
                 {
-                    Node *uncle = grandfather->_right; // 也就能确定叔叔位置
+                    Node* uncle = grandfather->_right; // 也就能确定叔叔位置
 
                     if (uncle && uncle->_col == red)
                     {
@@ -393,7 +399,7 @@ namespace my_RB_Tree
                 }
                 else // parent在grandfather的右树
                 {
-                    Node *uncle = grandfather->_left;
+                    Node* uncle = grandfather->_left;
 
                     if (uncle && uncle->_col == red)
                     {
@@ -430,12 +436,12 @@ namespace my_RB_Tree
 
         _pHead->_left = LeftMost();
         _pHead->_right = RightMost();
-        std::cout << (_pHead->_left)->_data << " " << (_pHead->_right)->_data << std::endl;
+        //std::cout << (_pHead->_left)->_data << " " << (_pHead->_right)->_data << std::endl;
         return std::make_pair(iterator(newnode), true);
     }
 
     template <class K, class T, class KeyOfT>
-    bool RBTree<K, T, KeyOfT>::_IsValidRBTRee(Node *cur, size_t blackCount, size_t pathBlack)
+    bool RBTree<K, T, KeyOfT>::_IsValidRBTRee(Node* cur, size_t blackCount, size_t pathBlack)
     {
         if (cur == nullptr)
         {
@@ -451,7 +457,7 @@ namespace my_RB_Tree
         }
         if (cur->_parent)
         {
-            Node *ppnode = cur->_parent;
+            Node* ppnode = cur->_parent;
             if (cur->_col == red && ppnode->_col == red)
             {
                 return false;
@@ -467,11 +473,11 @@ namespace my_RB_Tree
     template <class T, class Ptr, class Ref>
     void RBTreeIterator<T, Ptr, Ref>::Increament()
     {
-        Node *cur = _pNode, *parent = _pNode->_parent;
+        Node* cur = _pNode, * parent = _pNode->_parent;
         if (cur->_right)
         {
             // 找到右子树的最小结点
-            Node *curright = cur->_right;
+            Node* curright = cur->_right;
             while (curright->_left)
             {
                 curright = curright->_left;
@@ -491,11 +497,11 @@ namespace my_RB_Tree
     template <class T, class Ptr, class Ref>
     void RBTreeIterator<T, Ptr, Ref>::DeIncreament()
     {
-        Node *cur = _pNode, *parent = _pNode->_parent;
+        Node* cur = _pNode, * parent = _pNode->_parent;
         if (cur->_left)
         {
             // 找到左子树的最大结点
-            Node *curleft = cur->_left;
+            Node* curleft = cur->_left;
             while (curleft->_right)
             {
                 curleft = curleft->_right;
