@@ -1,90 +1,82 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "hash.hpp"
 
 namespace my_unordered_set
 {
-    template <class K, class V, class KeyOfValue, class HF>
-    class HashBucket;
-
-    template <class K, class V, class KeyOfValue, class HF>
-    struct HBIterator
-    {
-        typedef HashBucket<K, V, KeyOfValue, HF> HashBucket;
-        typedef HashBucketNode<V> *PNode;
-        typedef HBIterator<K, V, KeyOfValue, HF> Self;
-
-        HBIterator(PNode pNode = nullptr, HashBucket *pHt = nullptr);
-        Self &operator++()
-        {
-            // å½“å‰è¿­ä»£å™¨æ‰€æŒ‡èŠ‚ç‚¹åè¿˜æœ‰èŠ‚ç‚¹æ—¶ç›´æ¥å–å…¶ä¸‹ä¸€ä¸ªèŠ‚ç‚¹
-            if (_pNode->_pNext)
-                _pNode = _pNode->_pNext;
-            else
-            {
-                // æ‰¾ä¸‹ä¸€ä¸ªä¸ç©ºçš„æ¡¶ï¼Œè¿”å›è¯¥æ¡¶ä¸­ç¬¬ä¸€ä¸ªèŠ‚ç‚¹
-                size_t bucketNo = _pHt->HashFunc(KeyOfValue()(_pNode->_data)) + 1;
-                for (; bucketNo < _pHt->BucketCount(); ++bucketNo)
-                {
-                    if (_pNode = _pHt->_ht[bucketNo])
-                        break;
-                }
-            }
-
-            return *this;
-        }
-        Self operator++(int);
-        V &operator*();
-        V *operator->();
-        bool operator==(const Self &it) const;
-        bool operator!=(const Self &it) const;
-        PNode _pNode;     // å½“å‰è¿­ä»£å™¨å…³è”çš„èŠ‚ç‚¹
-        HashBucket *_pHt; // å“ˆå¸Œæ¡¶--ä¸»è¦æ˜¯ä¸ºäº†æ‰¾ä¸‹ä¸€ä¸ªç©ºæ¡¶æ—¶å€™æ–¹ä¾¿
-    };
-
-    template <class K, class HF = my_hash_bucket::HashFunc<K>>
+    template <class K>
     class unordered_set
     {
-        typedef HashBucket<K, K, KeyOfValue, HF> HT;
-        // é€šè¿‡keyè·å–valueçš„æ“ä½œ
-        struct KeyOfValue
+        struct KeyOfV
         {
-            const K &operator()(const K &data)
+            const K& operator()(const K& data)
             {
                 return data;
             }
         };
 
     public:
-        typename typedef HT::Iterator iterator;
+        typedef my_hash_bucket::HashBucket<K, K, KeyOfV> HT; // Ê¹ÓÃ¹şÏ£Í°·â×°ÎŞĞòset
+        typedef typename HT::const_iterator iterator;
+        typedef typename HT::const_iterator const_iterator;
 
     public:
         unordered_set() : _ht()
         {
         }
-        iterator begin() { return _ht.begin(); }
-        iterator end() { return _ht.end(); }
-
-        // capacity
-        size_t size() const { return _ht.size(); }
-        bool empty() const { return _ht.empty(); }
-
-        // lookup
-        iterator find(const K &key) { return _ht.Find(key); }
-        size_t count(const K &key) { return _ht.Count(key); }
-
-        // modify
-        pair<iterator, bool> insert(const K &valye)
+        iterator begin() const
         {
-            return _ht.Insert(valye);
+            return _ht.begin(); //ÕâÀïconstĞŞÊÎµÄÊÇ*this,ÄÇÃ´¹şÏ£Í°¶ÔÏóÊÇconstµÄ
+        }
+        iterator end() const
+        {
+            return _ht.end();
         }
 
-        iterator erase(iterator position)
+        // capacity
+        size_t size() const
         {
-            return _ht.Erase(position);
+            return _ht.size();
+        }
+        bool empty() const
+        {
+            return _ht.empty();
+        }
+
+        // lookup
+        iterator find(const K& key)
+        {
+            return _ht.Find(key);
+        }
+        size_t count(const K& key)
+        {
+            return _ht.Count(key);
+        }
+
+        // modify
+        pair<iterator, bool> insert(const K& value)
+        {
+            //ÕâÀïºÍºìºÚÊ÷Ò»Ñù,¶¼´æÔÚÆÕÍ¨µü´úÆ÷×ª»¯Îªconstµü´úÆ÷µÄÎÊÌâ
+            //ËùÒÔ,ºÍÖ®Ç°Ò»Ñù,ÒªÎªµü´úÆ÷Ôö¼ÓÒ»¸ö¹¹Ôìº¯Êı
+            auto it = _ht.Insert(value);
+            return make_pair(it.first, it.second);
+        }
+
+        iterator erase(iterator position) //½ÓÊÕµÄÊÇ¹şÏ£Í°µÄconstµü´úÆ÷
+        {
+            auto it = _ht.Erase(position); //·µ»ØµÄÊÇÆÕÍ¨µü´úÆ÷
+            return it;
         }
 
         // bucket
-        size_t bucket_count() { return _ht.BucketCount(); }
-        size_t bucket_size(const K &key) { return _ht.BucketSize(key); }
+        size_t bucket_count()
+        {
+            return _ht.BucketCount();
+        }
+        size_t bucket_size(const K& key)
+        {
+            return _ht.BucketSize(key);
+        }
 
     private:
         HT _ht;

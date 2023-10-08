@@ -1,29 +1,34 @@
+#define _CRT_SECURE_NO_WARNINGS
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <string>
+#include <type_traits>
 using namespace std;
 
-// å“ˆå¸Œæ¡¶
+// ¹şÏ£Í°
 namespace my_hash_bucket
 {
-    // funcç”¨äºæ‹¿åˆ°æ•°æ®å¯¹åº”çš„æ•´å‹å€¼->ç„¶åå¯ä»¥å¾—åˆ°å¯¹åº”çš„hashi
+    // hsfunc
+    // ÓÃÓÚÄÃµ½Êı¾İ¶ÔÓ¦µÄÕûĞÍÖµ->È»ºó¿ÉÒÔµÃµ½¶ÔÓ¦µÄhashi
     template <class T>
-    class HashFunc
+    class HSFunc
     {
     public:
-        size_t operator()(const T &val)
+        size_t operator()(const T& val)
         {
             return val;
         }
     };
     template <>
-    class HashFunc<string>
+    class HSFunc<string>
     {
     public:
-        size_t operator()(const string &s)
+        size_t operator()(const string& s)
         {
             int size = s.size();
-            unsigned int seed = 131; // 31 131 1313 13131 131313 éƒ½å¯ä»¥
+            unsigned int seed = 131; // 31 131 1313 13131 131313 ¶¼¿ÉÒÔ
             unsigned int hashi = 0;
             for (size_t i = 0; i < size; ++i)
             {
@@ -33,25 +38,119 @@ namespace my_hash_bucket
         }
     };
 
-    template <class V>
-    struct HashBucketNode // æ¯ä¸ªä½ç½®ä¸‹é“¾æ¥çš„ç»“ç‚¹
+    // ½áµã
+    template <class T>
+    struct HashBucketNode // Ã¿¸öÎ»ÖÃÏÂÁ´½ÓµÄ½áµã
     {
-        HashBucketNode(const V &data)
+        HashBucketNode(const T& data)
             : _next(nullptr), _data(data)
         {
         }
-        HashBucketNode<V> *_next;
-        V _data;
+        HashBucketNode<T>* _next;
+        T _data;
     };
 
-    // è¿™é‡Œçš„å“ˆå¸Œæ¡¶ä¸­keyæ˜¯å”¯ä¸€çš„
-    template <class V, class HF = HashFunc<V>>
-    class HashBucket // å“ˆå¸Œæ¡¶
-    {
-        typedef HashBucketNode<V> Node;
-        typedef Node *PNode;
+    // µü´úÆ÷
+    template <class K, class T, class KeyOfValue, class HF>
+    class HashBucket; // Ç°ÖÃÉùÃ÷,ÒòÎªµü´úÆ÷ÖĞÒªÓÃµ½¹şÏ£Í°,¶ø¹şÏ£Í°Ò²ÒªÓÃµ½µü´úÆ÷
+                      // µ«µü´úÆ÷¿Ï¶¨ÊÇÏÈµÄÄÇ¸ö,ËùÒÔ¸øµü´úÆ÷Ò»¸öÇ°ÖÃÉùÃ÷,ÈÃËû¿ÉÒÔÏÈÊ¹ÓÃ¹şÏ£Í°(ÉùÃ÷²»ĞèÒª¸øÄ¬ÈÏÖµ)
 
-        typedef HashBucket<V, HF> Self;
+    template <class K, class T, class Ptr, class Ref, class KeyOfValue, class HF>
+    struct HBIterator
+    {
+        typedef HashBucket<K, T, KeyOfValue, HF> HB;
+        typedef HashBucketNode<T>* PNode;
+        typedef HBIterator<K, T, Ptr, Ref, KeyOfValue, HF> Self; // ×Ô¼º,ÓÃÓÚ·µ»Ø
+
+        typedef HBIterator<K, T, T*, T&, KeyOfValue, HF> iterator; //ÓÃÓÚ½â¾ösetÖĞ²åÈëµÄÎÊÌâ
+
+        KeyOfValue kot;
+
+        HBIterator(PNode pNode = nullptr, const HB* pHt = nullptr)  //ÒòÎª»á³öÏÖ´«ÈëµÄÖ¸ÕëÊÇµ×²ãconstÀàĞÍµÄÇé¿ö,ËùÒÔÕâÀïÒ²¸Ä
+            : _pnode(pNode), _pHt(pHt) // ĞèÒª½áµãÖ¸Õë+¹şÏ£Í°¶ÔÏóµÄÖ¸Õë
+        {
+        }
+        HBIterator(const iterator& it)
+            : _pnode(it._pnode), _pHt(it._pHt) // ĞèÒª½áµãÖ¸Õë+¹şÏ£Í°¶ÔÏóµÄÖ¸Õë
+            //ËäÈ»Ôö¼ÓÁË¹¹Ôì,µ«»áµ¼ÖÂ,ÓÃÆÕÍ¨¶ÔÏó¹¹Ôì
+        {
+        }
+        Self& operator++()
+        {
+            // µ±Ç°µü´úÆ÷ËùÖ¸½Úµãºó»¹ÓĞ½ÚµãÊ±Ö±½ÓÈ¡ÆäÏÂÒ»¸ö½Úµã
+            if (_pnode->_next)
+            {
+                _pnode = _pnode->_next;
+            }
+
+            else
+            {
+                // ÕÒÏÂÒ»¸ö²»¿ÕµÄÍ°£¬·µ»Ø¸ÃÍ°ÖĞµÚÒ»¸ö½Úµã
+
+                size_t hashi = _pHt->HashFunc(kot(_pnode->_data)) + 1;
+                _pnode = nullptr; // ÕâÀïÌáÇ°¸³Öµ,ÒÔ·À;Ã»ÓĞÏÂÒ»¸öÍ°ºó,¿ÉÒÔ·µ»ØÖ¸Ïò¿ÕµÄµü´úÆ÷
+                for (; hashi < _pHt->BucketCount(); ++hashi)
+                {
+                    if (_pnode = _pHt->_table[hashi]) // ×¢Òâ,ÕâÀïÓÃµ½ÁË¹şÏ£Í°µÄË½ÃÜ³ÉÔ±,ËùÒÔĞèÒªÈÃµü´úÆ÷³ÉÎª¹şÏ£Í°µÄÓÑÔª
+                    {                                 // ºÃÃî
+                        break;
+                    }
+                    // if (_pHt->_ht[hashi])
+                    // {
+                    //     _pnode = _pHt->_ht[hashi];
+                    //     break;
+                    // }
+                }
+            }
+
+            return *this;
+        }
+        Self operator++(int)
+        {
+            Self tmp(*this);
+            ++(*this);
+            return tmp;
+        }
+        Ref operator*()
+        {
+            return _pnode->_data;
+        }
+        Ptr operator->()
+        {
+            return &_pnode->_data;
+        }
+        bool operator==(const Self& it) const
+        {
+            return _pnode == it._pnode;
+        }
+        bool operator!=(const Self& it) const
+        {
+            return _pnode != it._pnode;
+        }
+
+        PNode _pnode; // µ±Ç°µü´úÆ÷¹ØÁªµÄ½Úµã(Ò²¾ÍÊÇµü´úÆ÷µÄ±¾ÖÊ)
+        const HB* _pHt;     // ¹şÏ£Í°--ÎªÁËÕÒÏÂÒ»¸öÎ»ÖÃ
+        //ÒòÎª,»á³öÏÖ´«ÈëµÄÖ¸ÕëÊÇµ×²ãconstÀàĞÍµÄÇé¿ö,ËùÒÔÕâÀï¿ÉÒÔÖ±½Ó¶¨ÒåÎªµ×²ãconstÀàĞÍµÄÖ¸Õë,ÒòÎªµü´úÆ÷ÄÚ²¿²»ĞŞ¸Ä¹şÏ£Í°
+    };
+
+    // ¹şÏ£Í°
+    //  ÕâÀïµÄkeyÊÇÎ¨Ò»µÄ
+    template <class K, class T, class KeyOfValue, class HF = HSFunc<K>>
+    // KeyOfValueÓÃÓÚ²»Í¬ÀàĞÍµÄÔªËØ,·µ»Økey
+    // HFÓÃÓÚ²»Í¬ÀàĞÍµÄkey,·µ»ØÕûĞÍ
+    class HashBucket
+    {
+        template <class K, class T, class Ptr, class Ref, class KeyOfValue, class HF>
+        friend struct HBIterator;
+
+    public:
+        typedef HashBucketNode<T> Node;
+        typedef Node* PNode;
+
+        typedef HashBucket<K, T, KeyOfValue, HF> Self;
+
+        typedef HBIterator<K, T, T*, T&, KeyOfValue, HF> iterator;
+        typedef HBIterator<K, T, const T*, const T&, KeyOfValue, HF> const_iterator;
 
     public:
         HashBucket(size_t capacity = 5)
@@ -65,85 +164,135 @@ namespace my_hash_bucket
             Clear();
         }
 
-        // å“ˆå¸Œæ¡¶ä¸­çš„å…ƒç´ ä¸èƒ½é‡å¤
-        PNode Insert(const V &data)
+        iterator begin()
         {
-            if (Find(data))
+            for (size_t i = 0; i < _table.size(); ++i) // ±éÀúÊı×é,ÕÒµ½µÚÒ»¸öÍ°
             {
-                return nullptr;
+                if (_table[i])
+                {
+                    return iterator(_table[i], this);
+                }
             }
-            if (CheckCapacity()) // éœ€è¦æ‰©å®¹äº†
+            return iterator(nullptr, this); // ºÜÃî,thisÖ¸Õë¾ÍÊÇËùĞèÒªµÄ¹şÏ£Í°¶ÔÏóµÄÖ¸Õë
+        }
+        iterator end()
+        {
+            return iterator(nullptr, this);
+        }
+        const_iterator begin() const
+        {
+            for (size_t i = 0; i < _table.size(); ++i) // ±éÀúÊı×é,ÕÒµ½µÚÒ»¸öÍ°
+            {
+                if (_table[i])
+                {
+                    return iterator(_table[i], this);
+                }
+            }
+            return const_iterator(nullptr, this); // ºÜÃî,thisÖ¸Õë¾ÍÊÇËùĞèÒªµÄ¹şÏ£Í°¶ÔÏóµÄÖ¸Õë
+        }
+        const_iterator end() const
+        {
+            return const_iterator(nullptr, this); //ÕâÀïµÄconst,ĞŞÊÎµÄÊÇ*this,ËùÒÔ¹şÏ£Í°¶ÔÏóÊÇconstµÄ
+                    //µ«ÊÇ,µü´úÆ÷µÄ¹¹Ôì,ÊÇÖ±½Ó½«´«ÈëµÄµü´úÆ÷Ö¸Õë³õÊ¼»¯,ËùÒÔ¾Í»á³öÏÖ"constÖ¸Õë³õÊ¼»¯ÆÕÍ¨Ö¸Õë"µÄÎÊÌâ
+        }
+
+        // ¹şÏ£Í°ÖĞµÄÔªËØ²»ÄÜÖØ¸´
+        pair<iterator, bool> Insert(const T& data)
+        {
+            KeyOfValue kot;
+            auto it = Find(kot(data));
+            if (it != end())
+            {
+                return make_pair(it, false);
+            }
+            if (CheckCapacity()) // ĞèÒªÀ©ÈİÁË
             {
                 size_t newsize = _size * 2;
-                HashBucket<V> newhsb(newsize);
+                Self newhsb(newsize);
 
                 for (size_t i = 0; i < _size; ++i)
                 {
                     PNode cur = _table[i];
-                    while (cur) // æŠŠæ¡¶ä¸Šçš„ç»“ç‚¹æŒ‚åœ¨æ–°ä½ç½®
+                    while (cur) // °ÑÍ°ÉÏµÄ½áµã¹ÒÔÚĞÂÎ»ÖÃ
                     {
                         PNode next = cur->_next;
-                        size_t hashi = newhsb.HashFunc(cur->_data);
+                        size_t hashi = newhsb.HashFunc(kot(cur->_data));
 
                         cur->_next = newhsb._table[hashi];
                         newhsb._table[hashi] = cur;
 
                         cur = next;
+                        ++newhsb._size;
                     }
                     _table[i] = nullptr;
                 }
                 Swap(newhsb);
             }
             PNode newnode = new Node(data);
-            size_t hashi = HashFunc(data);
-            // å¤´æ’
+            size_t hashi = HashFunc(kot(data));
+            // Í·²å
             newnode->_next = _table[hashi];
             _table[hashi] = newnode;
             ++_size;
-            return newnode;
+            return make_pair(newnode, true);
         }
 
-        // åˆ é™¤å“ˆå¸Œæ¡¶ä¸­ä¸ºdataçš„å…ƒç´ (dataä¸ä¼šé‡å¤)
-        bool Erase(const V &data)
+        // É¾³ı¹şÏ£Í°ÖĞÎªdataµÄÔªËØ(data²»»áÖØ¸´)
+        iterator Erase(const_iterator del)
         {
-            PNode del = Find(data);
-            if (del == nullptr) // å¦‚æœæ²¡æ‰¾ç€
+            KeyOfValue kot;
+            if (del == end()) {
+                return end();
+            }
+            if (del != Find(kot(*del)))  // ËµÃ÷Õâ¸öµü´úÆ÷²»ÕıÈ·
             {
-                return false;
+                return end();
             }
 
-            size_t hashi = HashFunc(data);
+            auto cur = const_iterator(del);
+            ++cur;
+            size_t hashi = HashFunc(kot(*del));
             PNode prev = _table[hashi];
-            if (prev == del) // å¦‚æœåˆ é™¤çš„æ˜¯ç¬¬ä¸€ä¸ªç»“ç‚¹
+            if (prev == del._pnode) // Èç¹ûÉ¾³ıµÄÊÇµÚÒ»¸ö½áµã
             {
-                _table[hashi] = del->_next;
+                _table[hashi] = del._pnode->_next;
             }
             else
             {
-                while (prev && prev->_next->_data != data) // æ‰¾åˆ°ä¸Šä¸€ä¸ªç»“ç‚¹
+                while (prev && prev->_next->_data != *del) // ÕÒµ½ÉÏÒ»¸ö½áµã
                 {
                     prev = prev->_next;
                 }
-                prev->_next = del->_next;
+                prev->_next = del._pnode->_next;
             }
-            delete del;
-            del = nullptr;
             --_size;
+            auto it = const_iterator(begin());
+            int count = 0;
+            while (it != cur) {
+                ++it;
+                ++count;
+            }
+            auto a = iterator(begin());
+            for (int i = 0; i < count; ++i) {
+                ++a;
+            }
+            return a;
         }
 
-        PNode Find(const V &data)
+        iterator Find(const K& data) const
         {
+            KeyOfValue kot;
             size_t hashi = HashFunc(data);
             PNode cur = _table[hashi];
             while (cur)
             {
-                if (cur->_data == data)
+                if (kot(cur->_data) == data)
                 {
-                    return cur;
+                    return iterator(cur);
                 }
                 cur = cur->_next;
             }
-            return nullptr;
+            return iterator(nullptr);
         }
 
         size_t Size() const
@@ -156,7 +305,7 @@ namespace my_hash_bucket
             return 0 == _size;
         }
 
-        void Print()
+        void Print() const
         {
             for (size_t i = 0; i < _table.size(); ++i)
             {
@@ -193,20 +342,20 @@ namespace my_hash_bucket
             return _table.size();
         }
 
-        void Swap(Self &ht)
+        void Swap(Self& ht)
         {
             _table.swap(ht._table);
             swap(_size, ht._size);
         }
 
     private:
-        size_t HashFunc(const V &data) // å°†æ•°æ®è½¬æ¢æˆhashi
+        size_t HashFunc(const K& data) const// ½«Êı¾İ×ª»»³Éhashi
         {
             HF hf;
             return hf(data) % _table.size();
         }
 
-        bool CheckCapacity()
+        bool CheckCapacity() const
         {
             if (_size == _table.size())
             {
@@ -220,185 +369,6 @@ namespace my_hash_bucket
 
     private:
         vector<PNode> _table;
-        size_t _size; // å“ˆå¸Œè¡¨ä¸­æœ‰æ•ˆå…ƒç´ çš„ä¸ªæ•°
-    };
-}
-
-// å“ˆå¸Œè¡¨
-namespace my_hash_table
-{
-    // funcç”¨äºæ‹¿åˆ°æ•°æ®å¯¹åº”çš„æ•´å‹å€¼->ç„¶åå¯ä»¥å¾—åˆ°å¯¹åº”çš„hashi
-    template <class T>
-    class HashFunc
-    {
-    public:
-        size_t operator()(const T &val)
-        {
-            return val;
-        }
-    };
-    template <>
-    class HashFunc<string>
-    {
-    public:
-        size_t operator()(const string &s)
-        {
-            int size = s.size();
-            unsigned int seed = 131; // 31 131 1313 13131 131313 éƒ½å¯ä»¥
-            unsigned int hashi = 0;
-            for (size_t i = 0; i < size; ++i)
-            {
-                hashi = hashi * seed + s[i];
-            }
-            return hashi;
-        }
-    };
-
-    enum State
-    {
-        EMPTY,
-        EXIST,
-        DELETE
-    };
-
-    template <class K, class V, class HF = HashFunc<K>>
-    class HashTable
-    {
-        struct Elem
-        {
-            pair<K, V> _val;
-            State _state;
-        };
-        typedef HashTable<K, V> Self;
-
-    public:
-        HashTable(size_t capacity = 5)
-            : _ht(capacity), _size(0), _totalSize(0)
-        {
-            for (size_t i = 0; i < capacity; ++i)
-            {
-                _ht[i]._state = EMPTY;
-            }
-        }
-
-        // æ’å…¥
-        bool Insert(const pair<K, V> &val)
-        {
-            if (Find(val.first) != -1)
-            {
-                return false;
-            }
-            if (CheckCapacity()) // è®¾ç½®å½“å› å­è¶…è¿‡0.7å°±è¿›è¡Œæ‰©å®¹
-            {
-                size_t newsize = _ht.size() * 2;
-                Self newht(newsize);
-                for (size_t i = 0; i < _ht.size(); ++i)
-                {
-                    if (_ht[i]._state == EXIST)
-                    {
-                        newht.Insert(_ht[i]._val);
-                    }
-                }
-                Swap(newht);
-            }
-
-            size_t hashi = HashFunc(val.first);
-            while (_ht[hashi]._state == EXIST)
-            {
-                ++hashi;
-                hashi %= _ht.size();
-            }
-            _ht[hashi]._val = val;
-            _ht[hashi]._state = EXIST;
-            ++_size;
-            ++_totalSize;
-            return true;
-        }
-
-        // æŸ¥æ‰¾
-        size_t Find(const K &key)
-        {
-            size_t hashi = HashFunc(key);
-            for (size_t i = 0; i < _size; ++i)
-            {
-                if (_ht[i]._state == EXIST && _ht[i]._val.first == key)
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        // åˆ é™¤
-        bool Erase(const K &key)
-        {
-            size_t i = Find(key);
-            if (i == -1)
-            {
-                return false;
-            }
-            else
-            {
-                _ht[i]._state = DELETE;
-                --_size;
-                return true;
-            }
-        }
-
-        size_t Size() const
-        {
-            return _size;
-        }
-
-        bool Empty() const
-        {
-            return _size == 0;
-        }
-
-        void Print()
-        {
-            for (size_t i = 0; i < _ht.size(); ++i)
-            {
-                if (_ht[i]._state != EXIST)
-                {
-                    continue;
-                }
-                else
-                {
-                    Elem cur = _ht[i];
-                    printf("[%d]->", i);
-                    cout << cur._val.first << ":" << cur._val.second << endl;
-                }
-            }
-            cout << endl;
-        }
-
-        void Swap(Self &ht)
-        {
-            swap(_size, ht._size);
-            swap(_totalSize, ht._totalSize);
-            _ht.swap(ht._ht);
-        }
-
-    private:
-        size_t HashFunc(const K &key)
-        {
-            HF hf;
-            return hf(key) % _ht.size();
-        }
-
-        bool CheckCapacity()
-        {
-            if (_totalSize * 10 / _ht.size() >= 7)
-            {
-                return true;
-            }
-            return false;
-        }
-
-    private:
-        vector<Elem> _ht;
-        size_t _size;
-        size_t _totalSize; // å“ˆå¸Œè¡¨ä¸­çš„æ‰€æœ‰å…ƒç´ ï¼šæœ‰æ•ˆå’Œå·²åˆ é™¤, æ‰©å®¹æ—¶å€™è¦ç”¨åˆ°
+        size_t _size; // ¹şÏ£±íÖĞÓĞĞ§ÔªËØµÄ¸öÊı
     };
 }
