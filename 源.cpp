@@ -1,76 +1,120 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//void Test()
-//{
-//	// 动态申请一个int类型的空间
-//	int* ptr4 = new int;
-//
-//	// 动态申请一个int类型的空间并初始化为10
-//	int* ptr5 = new int(10);
-//
-//	// 动态申请10个int类型的空间
-//	int* ptr6 = new int[3];
-//
-//	int* ptr1 = new int[3]{ 1 };
-//	delete ptr4;
-//	delete ptr5;
-//	delete[] ptr6;
-//}
-//int main() {
-//	Test();
-//	return 0;
-//}
+#include "unordered_set.hpp"
+#include "unordered_map.hpp"
+void test1()
+{
+    my_unordered_set::unordered_set<int> hs;
+    hs.insert(1);
+    hs.insert(1);
+    hs.insert(5);
+    hs.insert(2);
+    hs.insert(23);
+    hs.insert(3);
+    hs.insert(6);
+    for (auto tmp : hs)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
+    auto it = hs.begin();
+    hs.erase(it);
+    hs.erase(hs.end());
+    for (auto tmp : hs)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
 
-#include<iostream>
-#include<vector>
-#include<string>
-using namespace std;
-//class A {
-//public:
-//	int _a = 0;
-//	~A() {
-//		cout << "~A()" << endl;
-//	}
-//};
-//int main() {
-//	A* p = new A[10];
-//	for (int i = 0; i < 10; ++i) {
-//		p[i]._a = i + 1;
-//	}
-//	delete p;
-//	return 0;
-//}
+    it = hs.begin();
+    for (auto tmp : hs) {
+        it=hs.erase(it);
+    }
+    for (auto tmp : hs)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
+}
+void test2() {
+    my_unordered_map::unordered_map<int,int> hs;
+    hs.insert(make_pair(1,1));
+    hs.insert(make_pair(12, 1));
+    hs.insert(make_pair(1, 1));
+    hs.insert(make_pair(13, 1));
+    hs.insert(make_pair(13, 1));
+    hs.insert(make_pair(55, 1));
+    hs.insert(make_pair(541, 1));
+    hs[23] = 2;
+    for (auto tmp : hs)
+    {
+        cout << tmp.first << " " ;
+    }
+    cout << endl;
+    auto it = hs.begin();
+    hs.erase(it);
+    hs.erase(hs.end());
+    for (auto tmp : hs)
+    {
+        cout << tmp.first << " ";
+    }
+    cout << endl;
 
-//int main() {
-//	const int a = 1;
-//	auto& b = a;
-//	b = 2;
-//	return 0;
-//}
+    it = hs.begin();
+    for (auto tmp : hs) {
+        it = hs.erase(it);
+    }
+    for (auto tmp : hs)
+    {
+        cout << tmp.first << " ";
+    }
+    cout << endl;
+}
 
-//int main() {
-//	vector<string> str;
-//	string tmp;
-//	int i = 0;
-//	while (cin >> tmp) {
-//		for (auto& a : tmp) {
-//			a = toupper(a);
-//		}
-//		str.push_back(tmp);
-//		cout << str[i++] << endl;
-//	}
-//	return 0;
-//}
+#include<unordered_set>
+#include<unordered_map>
+void test3() {
+    std::unordered_set<int> hs;
+    hs.insert(1);
+    hs.insert(1);
+    hs.insert(5);
+    hs.insert(2);
+    hs.insert(23);
+    hs.insert(3);
+    hs.insert(6);
+    for (auto tmp : hs)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
+    auto it = hs.begin();
+    it=hs.erase(it);
+    cout << *it << endl;
 
-int main() {
-	int arr[14 - 7];
-	vector<int> a;
-	for (int i = 0; i < 10; i++) {
-		a.push_back(i + 1);
-	}
-	for (auto it = a.begin(); it != a.end(); ++it) {
-		(*it) *= 2;
-		cout << (*it) << " ";
-	}
-	return 0;
+    std::unordered_map<int, int> ht;
+    ht.insert(make_pair(12, 1));
+    ht.insert(make_pair(1, 1));
+    ht.insert(make_pair(13, 1));
+    ht.insert(make_pair(13, 1));
+    ht.insert(make_pair(55, 1));
+    ht.insert(make_pair(541, 1));
+    for (auto tmp : ht)
+    {
+        cout << tmp.first << " " << tmp.second << endl;
+    }
+    cout << endl;
+
+    auto i=ht.erase(ht.begin());
+    i->second = 2;
+    for (auto tmp : ht)
+    {
+        cout << tmp.first << " " << tmp.second << endl;
+    }
+    cout << endl;
+}
+int main()
+{
+    test1();
+    test2();
+    return 0;
 }
