@@ -1,39 +1,71 @@
-#include "hash.hpp"
-
+#include "unordered_set.hpp"
+#include "unordered_map.hpp"
 void test1()
 {
-    my_hash_bucket::HashBucket<int> hs;
-    hs.Insert(1);
-    hs.Insert(5);
-    hs.Insert(2);
-    hs.Print();
-    hs.Insert(23);
-    hs.Insert(3);
-    hs.Print();
-    hs.Insert(6);
-    hs.Print();
+    my_unordered_set::unordered_set<int> hs;
+    hs.insert(1);
+    hs.insert(1);
+    hs.insert(5);
+    hs.insert(2);
+    hs.insert(23);
+    hs.insert(3);
+    hs.insert(6);
+    for (auto tmp : hs)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
+    auto it = hs.begin();
+    hs.erase(it);
+    hs.erase(hs.end());
+    for (auto tmp : hs)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
 
-    hs.Erase(3);
-    hs.Erase(6);
-    hs.Print();
+    it = hs.begin();
+    for (auto tmp : hs) {
+        it=hs.erase(it);
+    }
+    for (auto tmp : hs)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
 }
-void test2()
-{
-    my_hash_table::HashTable<int, int> ht;
-    ht.Insert(make_pair(1, 1));
-    ht.Insert(make_pair(2, 1));
-    ht.Insert(make_pair(9, 1));
-    ht.Print();
-    ht.Insert(make_pair(56, 1));
-    ht.Insert(make_pair(3, 1));
-    ht.Insert(make_pair(5, 1));
-    ht.Print();
+void test2() {
+    my_unordered_map::unordered_map<int,int> hs;
+    hs.insert(make_pair(1,1));
+    hs.insert(make_pair(12, 1));
+    hs.insert(make_pair(1, 1));
+    hs.insert(make_pair(13, 1));
+    hs.insert(make_pair(13, 1));
+    hs.insert(make_pair(55, 1));
+    hs.insert(make_pair(541, 1));
+    for (auto tmp : hs)
+    {
+        cout << tmp.first << " " ;
+    }
+    cout << endl;
+    auto it = hs.begin();
+    hs.erase(it);
+    hs.erase(hs.end());
+    for (auto tmp : hs)
+    {
+        cout << tmp.first << " ";
+    }
+    cout << endl;
 
-    ht.Insert(make_pair(5, 1));
-    ht.Print();
-
-    ht.Erase(1);
-    ht.Print();
+    it = hs.begin();
+    for (auto tmp : hs) {
+        it = hs.erase(it);
+    }
+    for (auto tmp : hs)
+    {
+        cout << tmp.first << " ";
+    }
+    cout << endl;
 }
 int main()
 {

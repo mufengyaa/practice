@@ -2,89 +2,79 @@
 
 namespace my_unordered_set
 {
-    template <class K, class V, class KeyOfValue, class HF>
-    class HashBucket;
-
-    template <class K, class V, class KeyOfValue, class HF>
-    struct HBIterator
-    {
-        typedef HashBucket<K, V, KeyOfValue, HF> HashBucket;
-        typedef HashBucketNode<V> *PNode;
-        typedef HBIterator<K, V, KeyOfValue, HF> Self;
-
-        HBIterator(PNode pNode = nullptr, HashBucket *pHt = nullptr);
-        Self &operator++()
-        {
-            // 当前迭代器所指节点后还有节点时直接取其下一个节点
-            if (_pNode->_pNext)
-                _pNode = _pNode->_pNext;
-            else
-            {
-                // 找下一个不空的桶，返回该桶中第一个节点
-                size_t bucketNo = _pHt->HashFunc(KeyOfValue()(_pNode->_data)) + 1;
-                for (; bucketNo < _pHt->BucketCount(); ++bucketNo)
-                {
-                    if (_pNode = _pHt->_ht[bucketNo])
-                        break;
-                }
-            }
-
-            return *this;
-        }
-        Self operator++(int);
-        V &operator*();
-        V *operator->();
-        bool operator==(const Self &it) const;
-        bool operator!=(const Self &it) const;
-        PNode _pNode;     // 当前迭代器关联的节点
-        HashBucket *_pHt; // 哈希桶--主要是为了找下一个空桶时候方便
-    };
-
-    template <class K, class HF = my_hash_bucket::HashFunc<K>>
+    template <class K>
     class unordered_set
     {
-        typedef HashBucket<K, K, KeyOfValue, HF> HT;
-        // 通过key获取value的操作
-        struct KeyOfValue
+        struct KeyOfV
         {
-            const K &operator()(const K &data)
+            const K& operator()(const K& data)
             {
                 return data;
             }
         };
 
     public:
-        typename typedef HT::Iterator iterator;
+        typedef my_hash_bucket::HashBucket<K, const K, KeyOfV> HT; // 使用哈希桶封装无序set
+        typedef typename HT::const_iterator iterator;
+        typedef typename HT::const_iterator const_iterator;
 
     public:
         unordered_set() : _ht()
         {
         }
-        iterator begin() { return _ht.begin(); }
-        iterator end() { return _ht.end(); }
-
-        // capacity
-        size_t size() const { return _ht.size(); }
-        bool empty() const { return _ht.empty(); }
-
-        // lookup
-        iterator find(const K &key) { return _ht.Find(key); }
-        size_t count(const K &key) { return _ht.Count(key); }
-
-        // modify
-        pair<iterator, bool> insert(const K &valye)
+        iterator begin() const
         {
-            return _ht.Insert(valye);
+            return _ht.begin(); //这里const修饰的是*this,那么哈希桶对象是const的
+        }
+        iterator end() const
+        {
+            return _ht.end();
         }
 
-        iterator erase(iterator position)
+        // capacity
+        size_t size() const
         {
-            return _ht.Erase(position);
+            return _ht.size();
+        }
+        bool empty() const
+        {
+            return _ht.empty();
+        }
+
+        // lookup
+        iterator find(const K& key)
+        {
+            return _ht.Find(key);
+        }
+        size_t count(const K& key)
+        {
+            return _ht.Count(key);
+        }
+
+        // modify
+        pair<iterator, bool> insert(const K& value)
+        {
+            //这里和红黑树一样,都存在普通迭代器转化为const迭代器的问题
+            //所以,和之前一样,要为迭代器增加一个构造函数
+            auto it = _ht.Insert(value);
+            return make_pair(it.first, it.second);
+        }
+
+        iterator erase(iterator position) //接收的是哈希桶的const迭代器
+        {
+            auto it = _ht.Erase(position); //返回的是普通迭代器
+            return it;
         }
 
         // bucket
-        size_t bucket_count() { return _ht.BucketCount(); }
-        size_t bucket_size(const K &key) { return _ht.BucketSize(key); }
+        size_t bucket_count()
+        {
+            return _ht.BucketCount();
+        }
+        size_t bucket_size(const K& key)
+        {
+            return _ht.BucketSize(key);
+        }
 
     private:
         HT _ht;
