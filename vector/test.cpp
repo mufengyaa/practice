@@ -1,4 +1,6 @@
-#include "test.hpp"
+#include "myvector.hpp"
+#include "mystring.hpp"
+#include "mylist.hpp"
 
 using namespace bit;
 
@@ -104,7 +106,7 @@ void test4()
         cout << c << " ";
     }
     cout << endl;
-    
+
     myvector<int> s3;
     s3 = s1;
     for (auto c : s3)
@@ -144,8 +146,79 @@ void test5()
     cout << endl;
     cout << *pos << endl;
 }
+void test6()
+{
+    // auto it = {1, 2, 3, 4};
+    // myvector<int> s1(it);
+    myvector<int> s2 = {1, 2, 3, 4};
+    for (auto tmp : s2)
+    {
+        cout << tmp << " ";
+    }
+    cout << endl;
+}
+
+#include <vector>
+// struct A
+// {
+//     A()
+//     {
+//         cout << "A()" << endl;
+//     }
+//     A(const A &tmp)
+//     {
+//         cout << "A(const A& tmp)" << endl;
+//     }
+//     int a;
+// };
+bit::myvector<int> func_move() // 返回右值
+{
+    cout << "func_move" << endl;
+    auto it = {1, 2, 3, 4};
+    myvector<int> tmp(it);
+    return tmp;
+}
+// A func_move() // 返回右值
+// {
+//     cout << "func_move" << endl;
+//     A tmp;
+//     return tmp;
+// }
+void test7() // 验证移动语义
+{
+    bit::myvector<int> s1(func_move());
+    bit::myvector<int> s2;
+    // A s1(func_move());
+}
+#include <list>
+void test8()
+{
+    vector<bit::mystring> s1;
+
+    bit::mystring arr("1234");
+    s1.push_back(arr);
+    cout << endl;
+
+    s1.push_back("243");
+    // list<bit::mystring> s1;
+
+    // bit::mystring arr("1234");
+    // s1.push_back(arr);
+    // cout<<endl;
+
+    // s1.push_back("243");
+}
+void test9()
+{
+    bit::mylist<bit::mystring> l;
+    l.push_back("123");
+    cout << endl;
+    bit::mystring arr("q34");
+    l.push_back(arr);
+}
+
 int main()
 {
-    test5();
+    test9();
     return 0;
 }
