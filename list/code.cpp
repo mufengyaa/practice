@@ -119,6 +119,12 @@ void test6()
         cout << *it << " ";
     }
     cout << endl;
+    auto it =l.rbegin();
+    cout<<*(++it)<<endl;
+    cout<<*(it++)<<endl;
+}
+void test7(){
+    
 }
 int main()
 {
