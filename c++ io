@@ -1,0 +1,78 @@
+#include<iostream>
+#include<fstream>
+#include<sstream>
+#include<string>
+
+using namespace std;
+
+struct info_data {
+	char _data[50]; //不能使用string/vector
+	int _port;
+};
+
+class information {
+public:
+	//ifstream& operator<<()
+	information(const string& arr) //我们的文件操作首先需要一个文件路径
+		:_filename(arr){}
+
+	void  b_read(info_data& info) {
+		ifstream i(_filename, ios_base::in | ios_base::binary);//用二进制读方式打开
+		i.read((char*)&info, sizeof(info));//将流中数据读入info中
+		i.close();
+	}
+	void b_write(const info_data& info) {
+		ofstream i(_filename, ios_base::out | ios_base::binary| ios_base::app);//用二进制写方式打开
+		i.write((const char*)&info, sizeof(info));//将info写入流中
+		i.write("\n", sizeof("\n"));
+		i.close();
+	}
+
+	void t_read(info_data& info) {
+		ifstream i(_filename);
+		i >> info._data >> info._port;//将流中数据读入info中
+		i.close();
+	}
+	void t_write(const info_data& info) {
+		ofstream i(_filename, ios_base::out | ios_base::app);
+		i << info._data << " " << info._port<<endl;//将info写入流中(可以在中间加入空格,这样存入文件中的数据更易懂)
+		i.close();
+	}
+private:
+	string _filename;
+};
+
+void test1() {
+	information t("test.txt");
+	info_data data;
+	t.t_write({ "hello",80 });
+	t.t_write({ "hello",80 });
+	t.t_read(data);
+	t.b_write({ "hello",80 });
+	info_data tmp;
+	t.b_read(tmp);
+	cout << tmp._data << " " << tmp._port << endl;
+}
+void test2() {
+	int a = 1;
+	double b = 1.1;
+	ostringstream o;
+	o << a << " " << b;
+	string str = o.str();
+	cout << str << endl;
+
+	ofstream i("test.txt", ios_base::out | ios_base::app);
+	i << str << endl;
+	i.close();
+}
+void test3() {
+	ifstream i("code.cpp");
+	char c;
+	while (i.get(c)) {
+		cout << c;
+	}
+}
+int main() {
+	test3();
+	return 0;
+}
