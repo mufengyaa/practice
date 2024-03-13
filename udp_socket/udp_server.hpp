@@ -7,6 +7,7 @@
 #include <cstring>
 
 #include <string>
+#include <functional>
 #include <iostream>
 
 #include "Log.hpp"
@@ -14,6 +15,7 @@
 Log lg;
 
 const int buff_size = 1024;
+using func_t = std::function<std::string(const std::string &)>;
 
 enum
 {
@@ -23,14 +25,15 @@ enum
 
 // 启动服务器时,传入ip地址和端口号
 // 手动启动
+
 class udp_server
 {
 public:
-    udp_server(const uint16_t port = 8080,const std::string ip = "0.0.0.0")
+    udp_server(const uint16_t port = 8080, const std::string ip = "0.0.0.0")
         : ip_(ip), port_(port), sockfd_(0)
     {
     }
-    void run()
+    void run(func_t func)
     {
         init();
         // 开始收发数据
@@ -57,7 +60,8 @@ public:
             lg(INFO, message.c_str());
 
             // 处理数据
-            std::string echo_info = process_info(buffer);
+            std::string echo_info = func(buffer);
+
             // 响应给发送端
             sendto(sockfd_, echo_info.c_str(), echo_info.size(), 0, reinterpret_cast<const struct sockaddr *>(&src_addr), src_len);
 
@@ -72,25 +76,16 @@ public:
             close(sockfd_);
         }
     }
+    static std::string get_id()
+    {
+        udp_server obj;
+        return obj.generate_id(obj.ip_, obj.port_);
+    }
 
 private:
     std::string generate_id(const std::string ip, const uint16_t port)
     {
         return "[" + ip + ":" + std::to_string(port) + "]";
-    }
-    std::string process_info(const std::string &info)
-    {
-        time_t t = time(nullptr);
-        struct tm *ctime = localtime(&t);
-
-        char time_stamp[SIZE];
-        snprintf(time_stamp, sizeof(time_stamp), "[%d-%d-%d %d:%d:%d]:",
-                 ctime->tm_year + 1900, ctime->tm_mon + 1, ctime->tm_mday,
-                 ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
-
-        std::string id = generate_id(ip_, port_);
-        std::string res = id + time_stamp + info + "\n";
-        return res;
     }
     void init()
     {
@@ -98,7 +93,7 @@ private:
         sockfd_ = socket(AF_INET, SOCK_DGRAM, 0);
         if (sockfd_ < 0)
         {
-            lg(FATAL, "socket create error, sockfd : %d,%s", sockfd_,strerror(errno));
+            lg(FATAL, "socket create error, sockfd : %d,%s", sockfd_, strerror(errno));
             exit(SOCKET_ERR);
         }
 
@@ -115,7 +110,7 @@ private:
         int res = bind(sockfd_, reinterpret_cast<const struct sockaddr *>(&addr), len);
         if (res < 0)
         {
-            lg(FATAL, "bind error, sockfd : %d,%s", sockfd_,strerror(errno));
+            lg(FATAL, "bind error, sockfd : %d,%s", sockfd_, strerror(errno));
             exit(BIND_ERR);
         }
         lg(INFO, "bind success, sockfd : %d", sockfd_);

@@ -37,7 +37,7 @@ struct data
 class udp_client
 {
 public:
-    udp_client(const uint16_t port = 8080,const std::string ip = "47.108.135.233")
+    udp_client(const uint16_t port = 8080, const std::string ip = "47.108.135.233")
         : ip_(ip), port_(port), sockfd_(0)
     {
     }
