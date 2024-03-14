@@ -62,7 +62,8 @@ int main()
 {
     udp_server s;
     // udp_server s(8080,"127.0.0.1");
-    s.run(process_command);
+    //s.run(process_info);
+    s.chat();
     return 0;
 }
 

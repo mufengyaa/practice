@@ -8,9 +8,12 @@
 
 #include <string>
 #include <functional>
+#include <map>
 #include <iostream>
 
 #include "Log.hpp"
+
+extern std::string get_time();
 
 Log lg;
 
@@ -69,6 +72,53 @@ public:
             lg(INFO, message.c_str());
         }
     }
+    void chat()
+    {
+        init();
+        // 开始收发数据
+        char buffer[buff_size];
+        memset(buffer, 0, sizeof(buffer));
+        std::string message;
+
+        while (true)
+        {
+            struct sockaddr_in src_addr;
+            socklen_t src_len = sizeof(src_addr);
+
+            // 获取数据
+            ssize_t n = recvfrom(sockfd_, buffer, sizeof(buffer) - 1, 0, reinterpret_cast<struct sockaddr *>(&src_addr), &src_len);
+            char ip[30];
+            // std::cout << inet_ntop(AF_INET, &(src_addr.sin_addr), ip, sizeof(ip) - 1)<<std::endl;
+
+            if (n < 0)
+            {
+                lg(WARNING, "recvfrom error, errno: %d, err string: %s", errno, strerror(errno));
+                continue;
+            }
+            buffer[n] = 0;
+            // std::cout << buffer << std::endl;
+            usr_[src_addr.sin_addr.s_addr] = src_addr; // 注册用户表
+            // for (auto it : usr_)
+            // {
+            //     std::cout << inet_ntop(AF_INET, &((it.second).sin_addr), ip, sizeof(ip) - 1) << std::endl;
+            // }
+
+            std::string id = generate_id(inet_ntoa(src_addr.sin_addr), ntohs(src_addr.sin_port));
+            message = id + "sever recvfrom success";
+            lg(INFO, message.c_str());
+
+            // 处理数据
+            std::string time_stamp = get_time();
+            std::string echo_info = id + time_stamp + buffer;
+            memset(buffer, 0, sizeof(buffer));
+
+            // 响应给所有用户端
+            send_all(echo_info);
+
+            message = id + "sever sendto success";
+            lg(INFO, message.c_str());
+        }
+    }
     ~udp_server()
     {
         if (sockfd_ > 0)
@@ -115,9 +165,19 @@ private:
         }
         lg(INFO, "bind success, sockfd : %d", sockfd_);
     }
+    void send_all(const std::string &echo_info)
+    {
+        char ip[30];
+        for (auto it : usr_)
+        {
+            // std::cout << inet_ntop(AF_INET, &((it.second)->sin_addr), ip, sizeof(ip) - 1)<<std::endl;
+            sendto(sockfd_, echo_info.c_str(), echo_info.size(), 0, reinterpret_cast<const struct sockaddr *>(&(it.second)), sizeof(it.second));
+        }
+    }
 
 private:
     int sockfd_;
     std::string ip_;
     uint16_t port_;
+    std::map<in_addr_t, struct sockaddr_in> usr_; //不能是指针,这样下次循环时,指针就换成新的客户端了
 };

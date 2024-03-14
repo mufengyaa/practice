@@ -10,7 +10,10 @@
 #include <string>
 #include <iostream>
 
+#include <pthread.h>
+
 #include "Log.hpp"
+#include "terminal.hpp"
 
 const int buff_size = 1024;
 
@@ -47,6 +50,7 @@ public:
 
         std::string info;
         char buffer[buff_size];
+        memset(buffer, 0, sizeof(buffer));
         while (true)
         {
             std::cout << "Please enter:";
@@ -72,6 +76,17 @@ public:
             memset(buffer, 0, sizeof(buffer));
         }
     }
+    void chat()
+    {
+        data *d = init();
+
+        pthread_t r = 0, w = 0;
+        pthread_create(&r, nullptr, input, d);
+        pthread_create(&w, nullptr, output, d);
+
+        pthread_join(r, nullptr);
+        pthread_join(w, nullptr);
+    }
 
 private:
     data *init()
@@ -89,11 +104,60 @@ private:
         socklen_t svr_len = sizeof(*svr_paddr);
         bzero(svr_paddr, svr_len);
 
-        svr_paddr->sin_addr.s_addr = inet_addr(ip_.c_str());
+        inet_aton(ip_.c_str(), &(svr_paddr->sin_addr));
         svr_paddr->sin_family = AF_INET;
         svr_paddr->sin_port = htons(port_);
 
         return new data({sockfd, svr_paddr, svr_len});
+    }
+    static void *input(void *args)
+    {
+        data *d = reinterpret_cast<data *>(args);
+
+        char ip[30];
+        inet_ntop(AF_INET, &((d->paddr_)->sin_addr), ip, sizeof(ip) - 1);
+
+        std::string welcome = "comming...";
+
+        sendto(d->sockfd_, welcome.c_str(), welcome.size(), 0, reinterpret_cast<const struct sockaddr *>(d->paddr_), d->len_);
+
+        std::string info;
+        while (true)
+        {
+            std::cout << "Please enter:";
+            std::getline(std::cin, info);
+
+            // 将消息发送给服务器
+            sendto(d->sockfd_, info.c_str(), info.size(), 0, reinterpret_cast<const struct sockaddr *>(d->paddr_), d->len_);
+            info.clear();
+        }
+        return nullptr;
+    }
+    static void *output(void *args)
+    {
+        data *d = reinterpret_cast<data *>(args);
+        // my_dup();
+
+        char buffer[buff_size];
+        memset(buffer, 0, sizeof(buffer));
+        while (true)
+        {
+            struct sockaddr_in addr; // 仅用于填充参数,拿到自己的地址信息没啥意义
+            socklen_t len = sizeof(addr);
+
+            // 获取数据(所有用户的消息都会获取)
+            ssize_t n = recvfrom(d->sockfd_, buffer, sizeof(buffer) - 1, 0, reinterpret_cast<struct sockaddr *>(&addr), &len);
+            if (n < 0)
+            {
+                lg(WARNING, "recvfrom error, errno: %d, err string: %s", errno, strerror(errno));
+                continue;
+            }
+            buffer[n] = 0;
+
+            std::cerr << buffer << std::endl;
+            memset(buffer, 0, sizeof(buffer));
+        }
+        return nullptr;
     }
 
 private:
