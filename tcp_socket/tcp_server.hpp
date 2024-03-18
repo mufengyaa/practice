@@ -13,9 +13,19 @@
 
 #include "Log.hpp"
 #include "helper.hpp"
+#include "Task.hpp"
+#include "thread_pool.hpp"
 
 const int backlog = 5;
-const int buff_size = 1024;
+
+class tcp_server;
+struct p_data
+{
+    int fd_;
+    uint16_t port_;
+    std::string ip_;
+    tcp_server *it_;
+};
 
 class tcp_server
 {
@@ -41,7 +51,7 @@ public:
             }
             char client_ip[32];
             inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, sizeof(client_ip));
-            int client_port = ntohs(client_addr.sin_port);
+            uint16_t client_port = ntohs(client_addr.sin_port);
 
             lg(INFO, "get a new link..., sockfd: %d, client ip: %s, client port: %d", sockfd, client_ip, client_port);
 
@@ -49,23 +59,68 @@ public:
             // echo(sockfd, client_ip, client_port);
             // close(sockfd);
 
-            // 多进程版
-            int ret = fork();
-            if (ret == 0)
-            {
-                close(listen_sockfd_);
-                int t = fork();
-                if (t == 0)
-                {
-                    echo(sockfd, client_ip, client_port);
-                }
-                exit(0);
-            }
-            close(sockfd);
-            int r = waitpid(ret, nullptr, 0);
-            (void)r;
+            // 多进程版 -- 孙子进程版
+            // int ret = fork();
+            // if (ret == 0)
+            // {
+            //     close(listen_sockfd_);
+            //     int t = fork();
+            //     if (t == 0)
+            //     {
+            //         echo(sockfd, client_ip, client_port);
+            //     }
+            //     exit(0);
+            // }
+            // close(sockfd);
+            // waitpid(ret, nullptr, 0);
+
+            // 多进程版 -- 忽略信号版
+            // int ret = fork();
+            // if (ret == 0)
+            // {
+            //     close(listen_sockfd_);
+            //     echo(sockfd, client_ip, client_port);
+            //     exit(0);
+            // }
+            // close(sockfd);
+            // signal(SIGCHLD, SIG_IGN);
+
+            // 多线程版
+            pthread_t tid = 0;
+            p_data *p = new p_data({sockfd, client_port, client_ip, this});
+            pthread_create(&tid, nullptr, entrance, reinterpret_cast<void *>(p));
         }
     }
+    void run_pthread_pool()
+    {
+        // 初始化
+        init();
+        thread_pool<Task> *tp = thread_pool<Task>::get_instance();
+        tp->init();
+
+        sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+        memset(&client_addr, 0, client_len);
+        lg(INFO, "init success");
+
+        while (true)
+        {
+            int sockfd = accept(listen_sockfd_, reinterpret_cast<struct sockaddr *>(&client_addr), &client_len);
+            if (sockfd < 0)
+            {
+                continue;
+            }
+            char client_ip[32];
+            inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, sizeof(client_ip));
+            uint16_t client_port = ntohs(client_addr.sin_port);
+
+            lg(INFO, "get a new link..., sockfd: %d, client ip: %s, client port: %d", sockfd, client_ip, client_port);
+
+            Task t(sockfd,client_ip,client_port);
+            tp->push(t);
+        }
+    }
+
     ~tcp_server() {}
 
 private:
@@ -127,14 +182,15 @@ private:
             }
         }
     }
-
-    std::string process_info(const std::string &info, const std::string ip, const uint16_t port)
+    static void *entrance(void *args)
     {
-        std::string time_stamp = get_time();
-        std::string id = generate_id(ip, port);
+        pthread_detach(pthread_self());
 
-        std::string res = id + time_stamp + info;
-        return res;
+        p_data *p = reinterpret_cast<p_data *>(args);
+        tcp_server *it = p->it_;
+        it->echo(p->fd_, (p->ip_).c_str(), p->port_);
+        delete p;
+        return nullptr;
     }
 
 private:

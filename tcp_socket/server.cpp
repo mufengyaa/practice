@@ -9,6 +9,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
     tcp_server t(std::stoi(argv[1]));
-    t.run();
+    t.run_pthread_pool();
     return 0;
 }

@@ -11,6 +11,8 @@ enum
     CONNECT_ERROR
 };
 
+const int buff_size = 1024;
+
 std::string get_time()
 {
     time_t t = time(nullptr);
@@ -26,4 +28,13 @@ std::string get_time()
 std::string generate_id(const std::string ip, const uint16_t port)
 {
     return "[" + ip + ":" + std::to_string(port) + "]";
+}
+
+std::string process_info(const std::string &info, const std::string ip, const uint16_t port)
+{
+    std::string time_stamp = get_time();
+    std::string id = generate_id(ip, port);
+
+    std::string res = id + time_stamp + info;
+    return res;
 }
