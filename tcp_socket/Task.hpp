@@ -5,7 +5,10 @@
 #include <stdio.h>
 
 #include "helper.hpp"
+#include "init.hpp"
 // 这里的任务是,服务端在收到客户端的连接后的后续工作
+
+words_init w;
 
 class Task
 {
@@ -17,6 +20,12 @@ public:
     }
 
     void operator()()
+    {
+        function();
+    }
+
+private:
+    void function()
     {
         char buffer[buff_size];
         memset(buffer, 0, sizeof(buffer));
@@ -37,7 +46,8 @@ public:
             else
             {
                 buffer[n] = 0;
-                std::string res = process_info(buffer, ip_, port_);
+                // std::string res = process_info(buffer, ip_, port_);
+                std::string res = w.translation(buffer);
                 write(sockfd_, res.c_str(), res.size());
             }
         }

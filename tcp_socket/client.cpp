@@ -9,6 +9,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
     tcp_client t(std::stoi(argv[1]),argv[2]);
-    t.run();
+    t.short_service();
     return 0;
 }

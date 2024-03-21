@@ -116,7 +116,7 @@ public:
 
             lg(INFO, "get a new link..., sockfd: %d, client ip: %s, client port: %d", sockfd, client_ip, client_port);
 
-            Task t(sockfd,client_ip,client_port);
+            Task t(sockfd, client_ip, client_port);
             tp->push(t);
         }
     }
@@ -134,6 +134,10 @@ private:
         }
         lg(INFO, "socket create success, sockfd : %d", listen_sockfd_);
 
+
+        int optval = 1;
+        setsockopt(listen_sockfd_, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(optval));
+        
         struct sockaddr_in *addr = new sockaddr_in;
         memset(addr, 0, sizeof(*addr));
         addr->sin_family = AF_INET;
@@ -154,6 +158,7 @@ private:
             exit(LISTEN_ERROR);
         }
         lg(INFO, "listen success, sockfd : %d", listen_sockfd_);
+
         delete addr;
     }
     void echo(int fd, const char *ip, const uint16_t port)
