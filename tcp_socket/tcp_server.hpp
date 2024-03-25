@@ -15,6 +15,7 @@
 #include "helper.hpp"
 #include "Task.hpp"
 #include "thread_pool.hpp"
+#include "daemon.hpp"
 
 const int backlog = 5;
 
@@ -126,6 +127,8 @@ public:
 private:
     void init()
     {
+        daemon();
+        
         listen_sockfd_ = socket(AF_INET, SOCK_STREAM, 0);
         if (listen_sockfd_ < 0)
         {
@@ -134,10 +137,9 @@ private:
         }
         lg(INFO, "socket create success, sockfd : %d", listen_sockfd_);
 
-
         int optval = 1;
         setsockopt(listen_sockfd_, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(optval));
-        
+
         struct sockaddr_in *addr = new sockaddr_in;
         memset(addr, 0, sizeof(*addr));
         addr->sin_family = AF_INET;

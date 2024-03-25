@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
         std::cout << "./tcp_server port(port>=1024)" << std::endl;
         exit(1);
     }
+    lg.enable();
     tcp_server t(std::stoi(argv[1]));
     t.run_pthread_pool();
     return 0;

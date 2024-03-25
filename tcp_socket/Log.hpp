@@ -15,13 +15,24 @@
 #define ERROR 3
 #define FATAL 4 // 致命的错误
 
+#define SCREEN 1
+#define ONEFILE 2
+
+#define DEF_NAME "log.txt"
+#define DEF_PATH "./log/"
+
 #define SIZE 1024
 
 class Log
 {
 public:
     Log()
+        : method_(SCREEN), path_(DEF_PATH)
     {
+    }
+    void enable()
+    {
+        method_ = ONEFILE;
     }
     void operator()(int level, const char *format, ...)
     {
@@ -43,7 +54,7 @@ public:
         char logtxt[SIZE * 2];
         snprintf(logtxt, sizeof(logtxt), "%s %s", leftbuffer, rightbuffer);
 
-        printf("%s\n", logtxt);
+        printLog(logtxt);
     }
     ~Log()
     {
@@ -68,6 +79,39 @@ private:
             return "NONE";
         }
     }
+    void printLog(const std::string &logtxt)
+    {
+        switch (method_)
+        {
+        case SCREEN:
+            std::cout << logtxt << std::endl;
+            break;
+        case ONEFILE:
+            printOneFile(logtxt);
+            break;
+        default:
+            break;
+        }
+    }
+    void printOneFile(const std::string &info)
+    {
+        std::string path = path_ + DEF_NAME;
+        int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0666);
+        //int fd = open("DEF_NAME", O_WRONLY | O_CREAT | O_APPEND, 0666);
+        if (fd > 0)
+        {
+            write(fd, info.c_str(), info.size());
+            close(fd);
+        }
+        else
+        {
+            return;
+        }
+    }
+
+private:
+    int method_;
+    std::string path_;
 };
 
 Log lg;

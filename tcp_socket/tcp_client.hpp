@@ -31,7 +31,7 @@ public:
             std::cout << "connect fail" << std::endl;
             exit(CONNECT_ERROR);
         }
-        
+
         while (true)
         {
 
@@ -95,7 +95,10 @@ public:
                 }
                 else
                 {
-                    std::cout << "connect success !" << std::endl;
+                    if (is_reconnect == true)
+                    {
+                        std::cout << "connect success !" << std::endl;
+                    }
                     is_reconnect = false;
                 }
             } while (is_reconnect && re_num);
