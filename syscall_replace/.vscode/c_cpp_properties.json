@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/src/kernels/3.10.0-1160.11.1.el7.x86_64/arch/x86/include/**",
+                "/usr/src/kernels/3.10.0-1160.11.1.el7.x86_64/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/opt/rh/devtoolset-8/root/usr/bin/gcc",
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
