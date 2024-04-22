@@ -1,53 +1,67 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 
 #define protocol_sep '\n'
 #define space_sep ' '
 
-std::string encode(const std::string &content)
+bool encode(std::string &content)
 {
     // 封装报文大小
     int size = content.size();
+    std::string tmp;
 
-    std::string ret = std::to_string(size);
-    ret += protocol_sep;
-    ret += content;
-    ret += protocol_sep;
+    tmp = std::to_string(size);
+    tmp += protocol_sep;
+    tmp += content;
+    tmp += protocol_sep;
 
-    return ret;
+    content = tmp;
+
+    return true;
 }
-bool decode(std::string &content)
+bool decode(std::string &content, std::string &data) // 把非法的/处理完成的报文删除
 {
     size_t left = content.find(protocol_sep);
     if (left == std::string::npos) // 不完整的报文
     {
         return false;
     }
-
-    std::string size_arr = content.substr(0, left);
-    int size = std::stoi(size_arr);
-
-    size_t right = content.rfind(protocol_sep);
-    if (right - left != size + 1) // 不完整的报文WS
+    size_t right = content.find(protocol_sep, left + 1);
+    if (right == std::string::npos) // 不完整的报文
     {
         return false;
     }
 
-    content = content.substr(left + 1, right); // 截断中间部分(这个就是完整的有效数据)
-    if (!content.empty() && content.back() == '\n') //插眼,很奇怪为什么还会有\n
+    // 拆出size
+    std::string size_arr = content.substr(0, left);
+    if (size_arr[0] < '0' || size_arr[0] > '9') // 注意size_arr里存放的不一定是数字
     {
-        content.pop_back(); // 如果子串最后一个字符是换行符，则移除
+        content.erase(0, size_arr.size() + 1); // 包括分隔符
+        return false;
     }
+    int size = std::stoi(size_arr);
+
+    if (right - left != size + 1) // 错误的报文 -- right-left-1是实际有效长度,而size是理论有效长度,如果二者不匹配,说明封装上就有问题/传数据有问题
+    {
+        content.erase(0, size_arr.size() + 1 + right - left); // 两个分隔符+数字长度+实际数据长度
+        return false;
+    }
+
+    data = content.substr(left + 1, size);        // 截断size长度的数据(这个就是完整的有效数据)
+    content.erase(0, size + size_arr.size() + 2); // 两个分隔符+数字的长度
     return true;
 }
 
 // class request
 // {
 // public:
-//     void Serialize(std::string &content)
+//     void serialize(std::string &content)
 //     {
-//         encode(content);
+//         content+="=";
+//     }
+//     void deserialize(const std::string &data){
 
 //     }
 

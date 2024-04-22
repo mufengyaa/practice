@@ -68,7 +68,7 @@ public:
         }
         lg(INFO, "listen success, sockfd : %d", sockfd_);
     }
-    int Accept(std::string clientip, uint16_t clientport)
+    int Accept(std::string &clientip, uint16_t &clientport)
     {
         sockaddr_in client_addr;
         socklen_t client_len = sizeof(client_addr);
@@ -102,11 +102,16 @@ public:
             printf("connect fail : %s:%d\n", ip.c_str(), port);
             return false;
         }
+        //printf("connect success\n");
         return true;
     }
     void Close() // tcp协议在初始化好后,就不需要这个套接字了(子进程)
     {
         close(sockfd_);
+    }
+    int get_fd()
+    {
+        return sockfd_;
     }
 
 public:

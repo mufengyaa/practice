@@ -2,7 +2,7 @@
 all:cal_server cal_client
 
 cal_server:server.cpp
-	g++ -o $@ $^ -std=c++11 -lpthread
+	g++ -o $@ $^ -std=c++11
 cal_client:client.cpp
 	g++ -o $@ $^ -std=c++11 
 

@@ -40,7 +40,7 @@ public:
         struct tm *ctime = localtime(&t);
 
         char leftbuffer[SIZE];
-        snprintf(leftbuffer, sizeof(leftbuffer), "[%s][%d-%d-%d %d:%d:%d]\n", levelToString(level).c_str(),
+        snprintf(leftbuffer, sizeof(leftbuffer), "[%s][%d-%d-%d %d:%d:%d]", levelToString(level).c_str(),
                  ctime->tm_year + 1900, ctime->tm_mon + 1, ctime->tm_mday,
                  ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
 
@@ -52,7 +52,7 @@ public:
 
         // 格式：默认部分+自定义部分
         char logtxt[SIZE * 2];
-        snprintf(logtxt, sizeof(logtxt), "%s %s", leftbuffer, rightbuffer);
+        snprintf(logtxt, sizeof(logtxt), "%s %s\n", leftbuffer, rightbuffer);
 
         printLog(logtxt);
     }

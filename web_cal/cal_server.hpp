@@ -1,20 +1,23 @@
 #include <signal.h>
 #include <cstring>
+#include <functional>
 
 #include "cal.hpp"
 #include "socket.hpp"
 
 static MY_SOCKET my_socket;
-static calculate Cal;
-#define buff_size 256
+// static calculate Cal;
+
+bool exit_ = false;
+using cal_t = std::function<std::string(std::string &arr)>;
 
 // 网络服务端
 
 class server
 {
 public:
-    server(const uint16_t port = 8080, const std::string &ip = "0.0.0.0")
-        : port_(port), ip_(ip)
+    server(const uint16_t port, const std::string &ip, cal_t callback)
+        : port_(port), ip_(ip), callback_(callback)
     {
     }
     ~server()
@@ -27,30 +30,45 @@ public:
         {
             uint16_t client_port;
             std::string client_ip;
+            lg(DEBUG, "accepting ...");
             int sockfd = my_socket.Accept(client_ip, client_port);
+            if (sockfd == -1)
+            {
+                continue;
+            }
             lg(INFO, "get a new link..., sockfd: %d, client ip: %s, client port: %d", sockfd, client_ip.c_str(), client_port);
 
             int ret = fork();
-            if (ret > 0)
+            if (ret == 0)
             {
                 my_socket.Close();
                 char buffer[buff_size];
-                memset(buffer, 0, sizeof(buffer));
+                std::string in_buffer;
 
-                while (true)
+                while (!exit_)
                 {
-                    int n = read(sockfd, buffer, sizeof(buffer));
+                    memset(buffer, 0, sizeof(buffer));
+                    int n = read(sockfd, buffer, sizeof(buffer)); //"size"\n"a op b"\n
                     if (n > 0)
                     {
                         buffer[n] = 0;
-                        std::string content = encode(buffer);
-                        std::cout << content.c_str() << std::endl;
+                        lg(INFO, "get request : %s", buffer);
+                        in_buffer += buffer; // 连续读取
 
-                        std::string res = Cal.cal(content);
-                        int n = write(sockfd, res.c_str(), res.size());
+                        while (true) // 处理多份数据
+                        {
+                            std::string content = callback_(in_buffer); //->"size"\n"result code"\n
+                            if (content.empty())
+                            {
+                                break;
+                            }
+                            
+                            write(sockfd, content.c_str(), content.size());
+                        }
                     }
                     else if (n == 0)
                     {
+                        lg(INFO, "%s quit", client_ip.c_str());
                         break;
                     }
                     else // 读出错误
@@ -58,6 +76,7 @@ public:
                         break;
                     }
                 }
+                // lg(INFO, "fork quit");
                 exit(0);
                 close(sockfd);
             }
@@ -69,6 +88,7 @@ private:
     {
         signal(SIGPIPE, SIG_IGN);
         signal(SIGCHLD, SIG_IGN);
+
         my_socket.Socket();
         my_socket.Bind(port_);
         my_socket.Listen();
@@ -78,4 +98,5 @@ private:
 public:
     uint16_t port_;
     std::string ip_;
+    cal_t callback_;
 };
