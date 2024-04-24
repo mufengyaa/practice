@@ -11,6 +11,7 @@ void helper()
 
 int main(int argc, char *argv[])
 {
+    lg.enable();
     if (argc != 3)
     {
         helper();

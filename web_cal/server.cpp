@@ -37,6 +37,8 @@ void test1(int port)
 int main(int argc, char *argv[])
 {
     // ./cal_server ports
+
+    lg.enable();
     if (argc != 2)
     {
         helper();

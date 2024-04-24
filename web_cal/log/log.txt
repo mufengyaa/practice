@@ -1,0 +1,17 @@
+[INFO][2024-4-24 11:45:37] socket create success, sockfd : 3
+[INFO][2024-4-24 11:45:37] bind success, sockfd : 3
+[INFO][2024-4-24 11:45:37] listen success, sockfd : 3
+[INFO][2024-4-24 11:45:37] server init done
+[DEBUG][2024-4-24 11:45:37] accepting ...
+[INFO][2024-4-24 11:46:18] socket create success, sockfd : 3
+[INFO][2024-4-24 11:46:18] bind success, sockfd : 3
+[INFO][2024-4-24 11:46:18] listen success, sockfd : 3
+[INFO][2024-4-24 11:46:18] server init done
+[DEBUG][2024-4-24 11:46:18] accepting ...
+[INFO][2024-4-24 11:46:37] socket create success, sockfd : 3
+[INFO][2024-4-24 11:46:37] get a new link..., sockfd: 4, client ip: 127.0.0.1, client port: 58592
+[DEBUG][2024-4-24 11:46:37] accepting ...
+[INFO][2024-4-24 11:46:39] get request : 4
+1+1=
+
+[INFO][2024-4-24 11:46:41] 127.0.0.1 quit

@@ -48,14 +48,16 @@ public:
                 if (ret > 0)
                 {
                     in_buffer += buffer;
+                    //std::cout << "in_buffer: " << in_buffer;
                     while (true) // 处理多份数据
                     {
                         std::string data;
                         bool ret = decode(in_buffer, data); //"result code"
-                        if (!ret) // 不是完整的报文
+                        if (!ret)                           // 不是完整的报文
                         {
                             break;
                         }
+                        //std::cout << "data: " << data;
 
                         response res;
                         res.deserialize(data);

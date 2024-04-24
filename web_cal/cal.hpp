@@ -46,7 +46,9 @@ public:
 
         std::string res_tmp;
         res.serialize(res_tmp); //"result code"
-        encode(res_tmp);        // size\n"result code"\n
+        //std::cout << "res_tmp : " << res_tmp;
+        encode(res_tmp); // size\n"result code"\n
+        //std::cout << "res_tmp : " << res_tmp;
 
         return res_tmp;
     }

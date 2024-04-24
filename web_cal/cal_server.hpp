@@ -1,4 +1,5 @@
 #include <signal.h>
+#include <unistd.h>
 #include <cstring>
 #include <functional>
 
@@ -58,11 +59,12 @@ public:
                         while (true) // 处理多份数据
                         {
                             std::string content = callback_(in_buffer); //->"size"\n"result code"\n
+                            // std::cout << "content: " << content << std::endl;
                             if (content.empty())
                             {
                                 break;
                             }
-                            
+
                             write(sockfd, content.c_str(), content.size());
                         }
                     }
@@ -88,6 +90,7 @@ private:
     {
         signal(SIGPIPE, SIG_IGN);
         signal(SIGCHLD, SIG_IGN);
+        daemon(1, 0);
 
         my_socket.Socket();
         my_socket.Bind(port_);
