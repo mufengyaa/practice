@@ -8,12 +8,51 @@
 
 #define protocol_sep "\r\n"
 #define blank_sep ' '
+#define root_path "./root_page"
+#define def_file "root.html"
+
+std::string get_page(std::string path)
+{
+    std::string content, tmp;
+    std::ifstream in(path.c_str());
+    if (!in.is_open())
+    {
+        return "";
+    }
+    while (std::getline(in, tmp))
+    {
+        content += tmp;
+    }
+    in.close();
+
+   // printf("content : %s", content.c_str());
+    return content;
+}
+std::string b_get_page(std::string path)
+{
+    std::ifstream in(path.c_str(), std::ios_base::binary);
+    if (!in.is_open())
+    {
+        return "";
+    }
+    in.seekg(0, std::ios_base::end);
+    auto len = in.tellg();
+    in.seekg(0, std::ios_base::beg);
+
+    std::string content;
+    content.resize(len);
+
+    in.read((char *)content.c_str(), content.size());
+    in.close();
+
+    return content;
+}
 
 class request
 {
 public:
     request()
-        : type_(""), url_(""), version_(""), text_("") {}
+        : type_(""), url_(""), version_(""), text_(""), path_(""), code_(0), suffix_("") {}
     bool deserialize(std::string &content)
     {
         std::string tmp;
@@ -38,12 +77,7 @@ public:
             }
         }
 
-        // 细分请求行
-        std::string request_line = title_[0];
-        std::stringstream ss(request_line);
-        ss >> type_ >> url_ >> version_;
-
-        // 如果有正文的话
+        // 判断是否有正文
         std::string comp = "Content-Length: ";
         bool is_find = false;
         int size = 0;
@@ -68,12 +102,64 @@ public:
             text_ = content.substr(left + 2, size);
             content.erase(0, left + 2 + size);
         }
+
+        handle_path();
+
         return true;
+    }
+
+private:
+    void handle_path() // 构建访问资源的路径
+    {
+        // 细分请求行
+        std::string request_line = title_[0];
+        std::stringstream ss(request_line);
+        ss >> type_ >> url_ >> version_;
+
+        // 构建路径
+        path_ = root_path;
+        if (url_ == "/")
+        {
+            path_ += "/";
+            path_ += def_file;
+        }
+        else if (url_ == "/302")
+        {
+            code_ = 302; // 这里设置为重定向到百度页面,所以不能走本地读取
+            return;
+        }
+        else
+        {
+            path_ += url_;
+        }
+
+        // 判断该资源是否存在
+        if (get_page(path_).empty())
+        {
+            code_ = 404; // 需要告诉响应,这里发生了404错误
+            path_ = root_path;
+            path_ += "/";
+            path_ += "404_err.html";
+        }
+
+        // 拿到资源后缀
+        size_t pos = path_.rfind(".");
+        if (pos == std::string::npos)
+        {
+            suffix_ = ".html";
+        }
+        else
+        {
+            suffix_ = path_.substr(pos);
+        }
     }
 
 public:
     std::string type_;
     std::string url_;
+    std::string path_;
+    int code_;
+    std::string suffix_;
     std::string version_;
     std::vector<std::string> title_;
     std::string text_;

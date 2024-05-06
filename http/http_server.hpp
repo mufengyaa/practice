@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <functional>
+#include <unordered_map>
 
 #include "socket.hpp"
 #include "Serialization.hpp"
@@ -11,14 +12,18 @@
 static MY_SOCKET my_socket;
 
 #define buff_size 1024 * 30
-#define root_path "./root_page"
-#define def_file "root.html"
 
 class http_server
 {
 public:
     http_server(const uint16_t port, const std::string &ip = "0.0.0.0")
-        : port_(port), ip_(ip) {}
+        : port_(port), ip_(ip)
+    {
+        content_type_[".html"] = "text/html";
+        content_type_[".png"] = "image/png";
+        content_type_[".jpg"] = "image/jpeg";
+        content_type_[".jpeg"] = "image/jpeg";
+    }
     ~http_server() {}
     void run()
     {
@@ -48,69 +53,21 @@ public:
                     int n = read(sockfd, buffer, sizeof(buffer)); //"size"\n"a op b"\n
                     if (n > 0)
                     {
-                        bool code_302 = false;
                         buffer[n] = 0;
-                        lg(INFO, "get request");
                         in_buffer += buffer; // 连续读取
-                        lg(INFO, "%s", in_buffer.c_str());
+                        lg(INFO, "get request: \n%s", in_buffer.c_str());
+
+                        // 构建请求
                         request req;
                         req.deserialize(in_buffer);
 
-                        // 构建访问资源的路径
-                        std::string def_page = root_path;
-                        if (req.url_ == "/")
-                        {
-                            def_page += "/";
-                            def_page += def_file;
-                        }
-                        else if (req.url_ == "/302")
-                        {
-                            code_302 = true;
-                        }
-                        else
-                        {
-                            def_page += req.url_;
-                        }
+                        //lg(DEBUG, "path: %s ,url: %s ", (req.path_).c_str(), (req.url_).c_str());
 
                         // 构建响应
                         response res;
-                        res.version_ = "HTTP/1.1";
-                        if (code_302)
-                        {
-                            res.code_ = 302;
-                            res.desc_ = "Found";
+                        handle_response(res, req);
 
-                            std::string cl = "Location: ";
-                            cl += "https://www.baidu.com";
-                            cl += protocol_sep;
-                            (res.title_).push_back(cl);
-                        }
-                        else
-                        {
-                            std::string text = get_page(def_page);
-                            if (text.empty())
-                            {
-                                res.code_ = 404;
-                                res.desc_ = "Not Found";
-                                def_page = root_path;
-                                def_page += "/";
-                                def_page += "404_err.html";
-
-                                req.text_ = get_page(def_page);
-                            }
-                            else
-                            {
-                                res.code_ = 200;
-                                res.desc_ = "OK";
-                                res.text_ = text;
-                            }
-
-                            std::string cl = "Content-Length: ";
-                            cl += std::to_string((req.text_).size());
-                            cl += protocol_sep;
-                            (res.title_).push_back(cl);
-                        }
-
+                        // 响应序列化
                         std::string content;
                         res.serialize(content);
 
@@ -126,7 +83,6 @@ public:
                         break;
                     }
                 }
-                // lg(INFO, "fork quit");
                 exit(0);
                 close(sockfd);
             }
@@ -144,22 +100,61 @@ private:
         my_socket.Listen();
         lg(INFO, "server init done");
     }
-    std::string get_page(std::string path)
+    void handle_response(response &res, request &req)
     {
-        std::ifstream in(path.c_str());
-        if (!in.is_open())
+        int code = req.code_;
+        std::string path = req.path_;
+        std::string content_type_data = content_type_[req.suffix_];
+        //lg(DEBUG, "content_type_data: %s", content_type_data.c_str());
+
+        res.version_ = "HTTP/1.1";
+        if (code == 302)
         {
-            return "";
+            res.code_ = 302;
+            res.desc_ = "Found";
+
+            std::string cl = "Location: ";
+            cl += "https://www.qq.com";
+            (res.title_).push_back(cl);
+            return ;
         }
-        std::string content, tmp;
-        while (std::getline(in, tmp))
+
+        if (code == 404)
         {
-            content += tmp;
+            res.code_ = 404;
+            res.desc_ = "Not Found";
         }
-        return content;
+        else
+        {
+            res.code_ = 200;
+            res.desc_ = "OK";
+        }
+
+        // 将读取网页和图片资源的方式分开
+        if (req.suffix_ == ".html")
+        {
+            res.text_ = get_page(path);
+            //lg(DEBUG, "text: %s", (res.text_).c_str());
+        }
+        else
+        {
+            res.text_ = b_get_page(path);
+        }
+
+        //  构建响应报头
+        std::string cl = "Content-Length: ";
+        cl += std::to_string((res.text_).size());
+        //lg(DEBUG, "text_size: %d", (res.text_).size());
+        (res.title_).push_back(cl);
+
+        cl = "Content-Type: ";
+        cl += content_type_data;
+        (res.title_).push_back(cl);
     }
 
 private:
     uint16_t port_;
     std::string ip_;
+
+    std::unordered_map<std::string, std::string> content_type_;
 };
