@@ -25,7 +25,7 @@ std::string get_page(std::string path)
     }
     in.close();
 
-   // printf("content : %s", content.c_str());
+    // printf("content : %s", content.c_str());
     return content;
 }
 std::string b_get_page(std::string path)
@@ -59,15 +59,15 @@ public:
         size_t left = 0;
         while (true)
         {
-            size_t pos = content.find(protocol_sep, left);
+            size_t pos = content.find(protocol_sep, left); //"/r/n"的第一个字符'/r'
             if (pos == std::string::npos)
             {
                 return false;
             }
 
             tmp = content.substr(left, pos - left); // 左闭右开
-            left = pos + 2;
-            if (tmp.empty()) // 读到空行
+            left = pos + 2;                         // 跳过/r/n
+            if (tmp.empty())                        // 读到空行
             {
                 break;
             }
@@ -95,12 +95,12 @@ public:
         }
         if (!is_find)
         { // 没有Content-Length字段
-            content.erase(0, left + 2);
+            content.erase(0, left);
         }
         else
         {
-            text_ = content.substr(left + 2, size);
-            content.erase(0, left + 2 + size);
+            text_ = content.substr(left, size);
+            content.erase(0, left + size);
         }
 
         handle_path();

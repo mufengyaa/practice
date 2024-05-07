@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <functional>
+#include <pthread.h>
 #include <unordered_map>
 
 #include "socket.hpp"
@@ -12,6 +13,15 @@
 static MY_SOCKET my_socket;
 
 #define buff_size 1024 * 30
+
+class http_server;
+struct thread_data
+{
+    int sockfd_;
+    std::string ip_;
+    std::string &in_buffer_;
+    http_server *this_;
+};
 
 class http_server
 {
@@ -32,60 +42,88 @@ public:
         {
             uint16_t client_port;
             std::string client_ip;
-            lg(DEBUG, "accepting ...");
-            int sockfd = my_socket.Accept(client_ip, client_port);
+
+            // 一个线程处理一次请求(短连接)
+            pthread_t pid;
+            std::string in_buffer;
+
+            int sockfd = 0;
+            int count = 5;
+            do
+            {
+                lg(DEBUG, "accepting ...");
+                sockfd = my_socket.Accept(client_ip, client_port);
+                if (sockfd != -1 || --count == 0)
+                {
+                    break;
+                }
+            } while (true);
             if (sockfd == -1)
             {
-                continue;
+                lg(ERROR, "accepting error");
             }
+
             lg(INFO, "get a new link..., sockfd: %d, client ip: %s, client port: %d", sockfd, client_ip.c_str(), client_port);
 
-            int ret = fork();
-            if (ret == 0)
-            {
-                my_socket.Close();
-                char buffer[buff_size];
-                std::string in_buffer;
+            thread_data *td = new thread_data{sockfd, client_ip, in_buffer, this};
+            lg(DEBUG, "create pthread");
+            pthread_create(&pid, nullptr, entry, reinterpret_cast<void *>(td));
 
-                while (true)
-                {
-                    memset(buffer, 0, sizeof(buffer));
-                    int n = read(sockfd, buffer, sizeof(buffer)); //"size"\n"a op b"\n
-                    if (n > 0)
-                    {
-                        buffer[n] = 0;
-                        in_buffer += buffer; // 连续读取
-                        lg(INFO, "get request: \n%s", in_buffer.c_str());
+            // 一个进程服务一个客户端
 
-                        // 构建请求
-                        request req;
-                        req.deserialize(in_buffer);
+            // lg(DEBUG, "accepting ...");
+            // int sockfd = my_socket.Accept(client_ip, client_port);
+            // if (sockfd == -1)
+            // {
+            //     continue;
+            // }
+            // lg(INFO, "get a new link..., sockfd: %d, client ip: %s, client port: %d", sockfd, client_ip.c_str(), client_port);
+            //  int ret = fork();
+            //  if (ret == 0)
+            //  {
+            //      my_socket.Close();
+            //  char buffer[buff_size];
+            //  std::string in_buffer;
 
-                        //lg(DEBUG, "path: %s ,url: %s ", (req.path_).c_str(), (req.url_).c_str());
+            // while (true)
+            // {
+            //     memset(buffer, 0, sizeof(buffer));
+            //     int n = read(sockfd, buffer, sizeof(buffer)); //"size"\n"a op b"\n
+            //     if (n > 0)
+            //     {
+            //         buffer[n] = 0;
+            //         in_buffer += buffer; // 连续读取
+            //         lg(INFO, "get request: \n%s", in_buffer.c_str());
 
-                        // 构建响应
-                        response res;
-                        handle_response(res, req);
+            //         // 构建请求
+            //         request req;
+            //         req.deserialize(in_buffer);
 
-                        // 响应序列化
-                        std::string content;
-                        res.serialize(content);
+            //         // lg(DEBUG, "path: %s ,url: %s ", (req.path_).c_str(), (req.url_).c_str());
 
-                        write(sockfd, content.c_str(), content.size());
-                    }
-                    else if (n == 0)
-                    {
-                        lg(INFO, "%s quit", client_ip.c_str());
-                        break;
-                    }
-                    else // 读出错误
-                    {
-                        break;
-                    }
-                }
-                exit(0);
-                close(sockfd);
-            }
+            //         // 构建响应
+            //         response res;
+            //         handle_response(res, req);
+
+            //         // 响应序列化
+            //         std::string content;
+            //         res.serialize(content);
+
+            //         write(sockfd, content.c_str(), content.size());
+            //     }
+            //     else if (n == 0)
+            //     {
+            //         lg(INFO, "%s quit", client_ip.c_str());
+            //         break;
+            //     }
+            //     else // 读出错误
+            //     {
+            //         break;
+            //     }
+            // }
+            //     exit(0);
+            //     close(sockfd);
+            // }
         }
     }
 
@@ -105,7 +143,7 @@ private:
         int code = req.code_;
         std::string path = req.path_;
         std::string content_type_data = content_type_[req.suffix_];
-        //lg(DEBUG, "content_type_data: %s", content_type_data.c_str());
+        // lg(DEBUG, "content_type_data: %s", content_type_data.c_str());
 
         res.version_ = "HTTP/1.1";
         if (code == 302)
@@ -116,7 +154,7 @@ private:
             std::string cl = "Location: ";
             cl += "https://www.qq.com";
             (res.title_).push_back(cl);
-            return ;
+            return;
         }
 
         if (code == 404)
@@ -134,7 +172,7 @@ private:
         if (req.suffix_ == ".html")
         {
             res.text_ = get_page(path);
-            //lg(DEBUG, "text: %s", (res.text_).c_str());
+            // lg(DEBUG, "text: %s", (res.text_).c_str());
         }
         else
         {
@@ -144,12 +182,98 @@ private:
         //  构建响应报头
         std::string cl = "Content-Length: ";
         cl += std::to_string((res.text_).size());
-        //lg(DEBUG, "text_size: %d", (res.text_).size());
+        // lg(DEBUG, "text_size: %d", (res.text_).size());
         (res.title_).push_back(cl);
 
         cl = "Content-Type: ";
         cl += content_type_data;
         (res.title_).push_back(cl);
+
+        // 增加cookie
+        if (!(req.text_).empty())
+        {
+            // lg(DEBUG, "TEXT: %s", req.text_.c_str());
+
+            size_t left = 0, right = 0;
+            while (true) // 把请求的正文部分的内容读出来
+            {
+                cl = "Set-Cookie: ";
+                right = (req.text_).find("&", left);
+                if (right == std::string::npos)
+                {
+                    cl += (req.text_).substr(left);
+                    break;
+                }
+                cl += (req.text_).substr(left, right - left);
+                left = right + 1;
+                (res.title_).push_back(cl);
+            }
+        }
+    }
+    static void *entry(void *args)
+    {
+        pthread_detach(pthread_self());
+
+        thread_data *td = reinterpret_cast<thread_data *>(args);
+        int sockfd = td->sockfd_;
+        std::string ip = td->ip_;
+        std::string in_buffer = td->in_buffer_;
+        http_server *it = td->this_;
+
+        // 读取请求
+        char buffer[buff_size];
+        bool flag = true;
+        request req;
+        while (true) // 虽说是短连接,但也得确保读出来的内容是一个完整的请求
+        {
+            memset(buffer, 0, sizeof(buffer));
+            int n = read(sockfd, buffer, sizeof(buffer));
+            if (n > 0)
+            {
+                buffer[n] = 0;
+                in_buffer += buffer; // 连续读取
+                lg(INFO, "get request: \n%s", in_buffer.c_str());
+
+                // 构建请求
+                flag = req.deserialize(in_buffer);
+                if (flag == false)
+                {
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else if (n == 0)
+            {
+                lg(INFO, "%s quit", ip.c_str());
+                return nullptr;
+            }
+            else
+            {
+                lg(ERROR, "%s read error", ip.c_str());
+                return nullptr;
+            }
+        }
+
+        // lg(DEBUG, "path: %s ,url: %s ", (req.path_).c_str(), (req.url_).c_str());
+
+        // 构建响应
+        response res;
+        it->handle_response(res, req);
+
+        // 响应序列化
+        std::string content;
+        res.serialize(content);
+
+        write(sockfd, content.c_str(), content.size());
+
+        //  销毁资源
+        delete td;
+        close(sockfd);
+
+        return nullptr;
     }
 
 private:
