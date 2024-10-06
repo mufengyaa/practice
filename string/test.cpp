@@ -1,8 +1,9 @@
-#include "test.hpp"
+#include "mystring.hpp"
+using namespace bit;
 
 void test()
 {
-    mystring::string s1("hello");
+    mystring s1("hello");
     cout << s1 << endl;
     s1.append(" world");
     cout << s1 << endl;
@@ -17,7 +18,7 @@ void test()
 }
 void test1()
 {
-    mystring::string s1("hello");
+    mystring s1("hello");
     cout << s1 << endl;
     s1.insert(2, 3, '*');
     cout << s1 << endl;
@@ -28,18 +29,18 @@ void test1()
 }
 void test2()
 {
-    mystring::string s1("hello");
+    mystring s1("hello");
     cout << s1 << endl;
     s1.insert(2, "**");
     cout << s1 << endl;
     s1.erase(2, 3);
     cout << s1 << endl;
-    s1.erase(1.20);
+    s1.erase(1,20);
     cout << s1 << endl;
 }
 void test3()
 {
-    mystring::string s1("hello");
+    mystring s1("hello");
     ssize_t i = s1.find('l');
     cout << i << endl;
     i = s1.find("l0");
@@ -50,44 +51,46 @@ void test3()
     cout << s1 << endl;
 }
 
-void test4(){
-    mystring::string s1("hello");
+void test4()
+{
+    mystring s1("hello");
     cout << s1 << endl;
-    s1+='\0';
-    s1+="124324";
+    s1 += '\0';
+    s1 += "124324";
     cout << s1 << endl;
-    cout<<s1.c_str()<<endl;
+    cout << s1.c_str() << endl;
 }
-void test5(){
-    mystring::string s1("hello");
-    mystring::string s2("helloccwse");
-    cout<<(s1==s2)<<endl;
-    cout<<(s1>s2)<<endl;
-    cout<<(s1<s2)<<endl;
-    cout<<(s1<=s2)<<endl;
-    cout<<(s1>=s2)<<endl;
-    cout<<(s1!=s2)<<endl;
+void test5()
+{
+    mystring s1("hello");
+    mystring s2("helloccwse");
+    cout << (s1 == s2) << endl;
+    cout << (s1 > s2) << endl;
+    cout << (s1 < s2) << endl;
+    cout << (s1 <= s2) << endl;
+    cout << (s1 >= s2) << endl;
+    cout << (s1 != s2) << endl;
 }
-void test6(){
-    mystring::string s1("hello");
-    mystring::string s2("helloccwse");
-    swap(s1,s2);
-    cout<<s1<<endl;
-    cout<<s2<<endl;
-    mystring::string s3;
-    s3=s1;
-    cout<<s3<<endl;
+void test6()
+{
+    mystring s1("hello");
+    mystring s2("helloccwse");
+    cout << s1 << endl;
+    cout << s2 << endl;
+    mystring s3;
+    s3="hello";
+    cout << s3 << endl;
 }
-void test7(){
-    mystring::string s1("hello");
-    mystring::string s2;
-    s2=s1;
-    cout<<s2<<endl;
+void test7()
+{
+    mystring s1("hello");
+    mystring s2;
+    s2 = s1;
+    cout << s2 << endl;
 }
 
 int main()
 {
     test6();
-    test7();
     return 0;
 }

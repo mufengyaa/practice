@@ -15,15 +15,15 @@ int main(){
     char* const _env[]={
       (char*)"val=2023",NULL
     };
-    execl("/usr/bin/ls","ls","-l","-a",NULL);
+//  execl("/usr/bin/ls","ls","-l",NULL);
 //  execv("/usr/bin/ls",order);
 //  execlp("ls","ls","-l",NULL);
    // execvp("ls",order);
   //  execle("/usr/bin/ls","ls","-l",_env);
     //execle("/home/mufeng/c++/exec/test","test",NULL,_env);
     //execle("/home/mufeng/c++/exec/test","test",NULL,_env);
-  //  execlp("python","python","test.py",NULL);
-  //  exit(11);
+    execlp("python","python","test.py",NULL);
+    exit(11);
   }
   else{
     printf("im parent\n");

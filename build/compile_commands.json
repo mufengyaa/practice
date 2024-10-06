@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/mufeng/c++/build",
+  "command": "/opt/rh/devtoolset-8/root/usr/bin/g++    -g   -std=gnu++11 -o CMakeFiles/client.dir/client.cpp.o -c /home/mufeng/c++/reactor/client.cpp",
+  "file": "/home/mufeng/c++/reactor/client.cpp"
+},
+{
+  "directory": "/home/mufeng/c++/build",
+  "command": "/opt/rh/devtoolset-8/root/usr/bin/g++    -g   -std=gnu++11 -o CMakeFiles/server.dir/server.cpp.o -c /home/mufeng/c++/reactor/server.cpp",
+  "file": "/home/mufeng/c++/reactor/server.cpp"
+}
+]

@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [],
+            "defines": [],
+            "intelliSenseMode": "linux-gcc-x64",
+            "cppStandard": "c++11",
+            "compilerPath": "/opt/rh/devtoolset-8/root/usr/bin/g++",
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "cStandard": "c99"
+        }
+    ],
+    "version": 4
+}

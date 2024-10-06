@@ -7,6 +7,7 @@
 #include <cstring>
 #include <sys/syscall.h>
 #include <vector>
+#include <fcntl.h>
 
 using namespace std;
 
@@ -178,24 +179,33 @@ void test5()
 }
 
 __thread int g_val = 0;
-void* func6(void* args){
+void *func6(void *args)
+{
+    int fd = *((int *)args);
     while (true)
     {
+        int n=write(fd, "111", 3);
+        if(n<=0){
+            cout<<"test quit"<<endl;
+        }
         sleep(1);
         ++g_val;
-        cout << "im new : "<< g_val << " " << &g_val << endl;
+        cout << "im new : " << g_val << " " << &g_val << endl;
     }
 }
 void test6()
 {
     pthread_t tid;
-    pthread_create(&tid, nullptr, func6, nullptr);
+    int fd = open("test.txt", O_CREAT | O_RDWR);
+    pthread_create(&tid, nullptr, func6, &fd);
 
     while (true)
     {
+        write(fd, "xxx", 3);
         sleep(2);
+        close(fd);
         ++g_val;
-        cout << "im main : "<< g_val << " " << &g_val << endl;
+        cout << "im main : " << g_val << " " << &g_val << endl;
     }
 }
 int main()

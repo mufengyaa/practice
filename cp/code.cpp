@@ -1,4 +1,5 @@
 #include "BlockQueue.hpp"
+#include "Task.hpp"
 
 int func_add(int x, int y)
 {
@@ -21,8 +22,8 @@ void *c_func(void *args)
     {
         Task t;
         bq->pop(t);
-        cout << pthread_self() << " 我消费了 : " << t.get_x() << " + " << t.get_y() << " = " << (t.get_x() + t.get_y()) << endl;
-        // sleep(2);
+        cout << pthread_self() << " consume : " << t.get_x() << " + " << t.get_y() << " = " << (t.get_x() + t.get_y()) << endl;
+        sleep(2);
     }
     return nullptr;
 }
@@ -50,7 +51,7 @@ void *p_func(void *args)
         // cin >> y;
 
         Task t(x, y, func_add);
-        cout << pthread_self() << " 我生产了 : " << x << " + " << y << " = ? " << endl;
+        cout << pthread_self() << " produce : " << x << " + " << y << " = ? " << endl;
         bq->push(t);
         sleep(1);
     }
@@ -86,6 +87,7 @@ void test2()
     pthread_join(tid2[0], nullptr);
     pthread_join(tid2[1], nullptr);
 }
+
 int main()
 {
     test2();

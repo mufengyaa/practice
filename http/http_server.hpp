@@ -201,7 +201,7 @@ private:
                 right = (req.text_).find("&", left);
                 if (right == std::string::npos)
                 {
-                    cl += (req.text_).substr(left);
+                    //最后一个字段是submit,我这里就不把它保存到cookie里了
                     break;
                 }
                 cl += (req.text_).substr(left, right - left);

@@ -152,7 +152,7 @@ namespace my_AvlTree
             //           << "newnode:" << newnode->_data << std::endl;
 
             // 维护bf
-            cur = parent;
+            cur = parent; //注意,这里不能直接定义cur的父结点,因为不能保证cur不为空(如果此时只有俩结点,就为空了!!!)
             while (cur != _root)
             {
                 Node *pnode = cur->_parent;
@@ -408,5 +408,4 @@ namespace my_AvlTree
             }
         }
     }
-
 }

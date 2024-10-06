@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <vector>
 #include <cassert>
+#include <atomic>
 #include <time.h>
 
 using namespace std;
@@ -57,6 +58,23 @@ void *func2(void *args)
             break;
         }
         usleep(1000); // 模拟抢票成功后的花费时间(为了尽量让不同线程去抢票)
+    }
+    return nullptr;
+}
+
+atomic<int> num(10000);
+
+void *func3(void *args)
+{
+    while (true)
+    {
+        int currentCount = num.load(); // 使用原子加载获取当前值
+        if (currentCount >= 0)
+        {
+            usleep(1000); // 模拟可能花费的时间
+            cout << currentCount << endl;
+            num.store(currentCount - 1); // 使用原子存储更新值
+        }
     }
     return nullptr;
 }

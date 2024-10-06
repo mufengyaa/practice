@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <functional>
+#include <memory>
 
 #include "cal.hpp"
 #include "socket.hpp"
@@ -14,7 +15,7 @@ using cal_t = std::function<std::string(std::string &arr)>;
 
 // 网络服务端
 
-class server
+class server : public std::enable_shared_from_this<server>
 {
 public:
     server(const uint16_t port, const std::string &ip, cal_t callback)

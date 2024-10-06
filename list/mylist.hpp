@@ -4,6 +4,19 @@
 
 using namespace std;
 
+template <typename T>
+T my_forward(typename remove_reference<T>::type && data)
+{
+    cout<<"&&"<<endl;
+    return data;
+}
+template <typename T>
+T my_forward(typename remove_reference<T>::type &data)
+{
+    cout<<"&"<<endl;
+    return data;
+}
+
 namespace bit
 {
     // List的节点类
@@ -20,7 +33,7 @@ namespace bit
         // 我们也可以用通用引用,来实现不同类型的参数,调用不同的构造
         template <class Data>
         ListNode(Data &&val)
-            : _ppre(nullptr), _pnext(nullptr), _val(forward<Data>(val)){};
+            : _ppre(nullptr), _pnext(nullptr), _val(my_forward<Data>(val)){};
 
         template <class... Args>
         ListNode(Args... args)
@@ -225,7 +238,8 @@ namespace bit
         }
         void push_back(T &&val) // 移动构造,如果这里传入一个右值
         {
-            insert(end(), std::forward<T>(val)); // 需要我们保持它的右值属性
+            insert(end(), my_forward<T>(val)); // 需要我们保持它的右值属性
+            // insert(end(), val); // 需要我们保持它的右值属性
         }
 
         void pop_back()
@@ -239,7 +253,7 @@ namespace bit
         }
         void push_front(T &&val) // 移动构造,如果这里传入一个右值
         {
-            insert(begin(), std::forward<T>(val)); // 需要我们保持它的右值属性
+            insert(begin(), my_forward<T>(val)); // 需要我们保持它的右值属性
         }
 
         void pop_front()
@@ -247,9 +261,10 @@ namespace bit
             erase(begin());
         }
 
-        template <class... Args>  
-        void emplace_back (Args&&... args){
-            insert(end(),args...);
+        template <class... Args>
+        void emplace_back(Args &&...args)
+        {
+            insert(end(), args...);
         }
 
         // 在pos位置前插入值为val的节点
@@ -269,8 +284,8 @@ namespace bit
 
             return newnode;
         }
-        template <class... Args>  
-        iterator insert(iterator pos, Args&&... args)
+        template <class... Args>
+        iterator insert(iterator pos, Args &&...args)
         {
             PNode cur = pos._pNode;
             PNode pre = cur->_ppre;
@@ -290,7 +305,7 @@ namespace bit
         {
             PNode cur = pos._pNode;
             PNode pre = cur->_ppre;
-            PNode newnode = new Node(std::forward<T>(val)); // 要保持它的右值属性
+            PNode newnode = new Node(my_forward<T>(val)); // 要保持它的右值属性
 
             newnode->_pnext = cur;
             pre->_pnext = newnode;
