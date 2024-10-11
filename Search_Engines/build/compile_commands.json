@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/mufeng/c++/Search_Engines/build",
+  "command": "/opt/rh/devtoolset-8/root/usr/bin/g++    -g   -std=gnu++11 -o CMakeFiles/parser.dir/parser.cpp.o -c /home/mufeng/c++/Search_Engines/parser.cpp",
+  "file": "/home/mufeng/c++/Search_Engines/parser.cpp"
+}
+]
