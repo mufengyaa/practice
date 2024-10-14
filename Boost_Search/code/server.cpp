@@ -1,6 +1,6 @@
 #include "searcher.hpp"
 #include "/home/mufeng/cpp-httplib/httplib.h"
-#include<pthread.h>
+#include <pthread.h>
 
 #define root_path "../wwwroot"
 
