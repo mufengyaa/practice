@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-8/root/usr/bin/g++  -g   CMakeFiles/parser.dir/parser.cpp.o  -o parser  -lboost_system -lboost_filesystem 
