@@ -1,1 +1,1 @@
-/opt/rh/devtoolset-8/root/usr/bin/c++     CMakeFiles/server.dir/server.cpp.o  -o server  -ljsoncpp 
+/usr/local/bin/g++  -g   CMakeFiles/server.dir/server.cpp.o  -o server  -ljsoncpp 

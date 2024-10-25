@@ -1,1 +1,0 @@
-cmd_/home/mufeng/c++/keyboard_interrupt/test_inter.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/mufeng/c++/keyboard_interrupt/test_inter.ko /home/mufeng/c++/keyboard_interrupt/test_inter.o /home/mufeng/c++/keyboard_interrupt/test_inter.mod.o

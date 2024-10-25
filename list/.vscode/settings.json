@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.hpp": "cpp",
-        "*.cpp": "cpp",
-        "list": "cpp",
-        "iostream": "cpp",
-        "random": "cpp"
-    }
-}
