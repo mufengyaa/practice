@@ -1,0 +1,25 @@
+Detecting C compiler ABI info failed to compile with the following output:
+Change Dir: /home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_2b65f/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_2b65f.dir/build.make CMakeFiles/cmTC_2b65f.dir/build
+gmake[1]: Entering directory '/home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/CMakeTmp'
+gmake[1]: /bin/sh: No such file or directory
+gmake[1]: *** [CMakeFiles/cmTC_2b65f.dir/build.make:77: CMakeFiles/cmTC_2b65f.dir/CMakeCCompilerABI.c.o] Error 127
+gmake[1]: Leaving directory '/home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_2b65f/fast] Error 2
+
+
+
+
+Determining if the C compiler works failed with the following output:
+Change Dir: /home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_211ae/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_211ae.dir/build.make CMakeFiles/cmTC_211ae.dir/build
+gmake[1]: Entering directory '/home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/CMakeTmp'
+gmake[1]: /bin/sh: No such file or directory
+gmake[1]: *** [CMakeFiles/cmTC_211ae.dir/build.make:77: CMakeFiles/cmTC_211ae.dir/testCCompiler.c.o] Error 127
+gmake[1]: Leaving directory '/home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_211ae/fast] Error 2
+
+
+

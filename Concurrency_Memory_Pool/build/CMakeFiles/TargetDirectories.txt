@@ -1,0 +1,3 @@
+/home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/test_Fixed_length.dir
+/home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/edit_cache.dir
+/home/mufeng/c++/Concurrency_Memory_Pool/build/CMakeFiles/rebuild_cache.dir
