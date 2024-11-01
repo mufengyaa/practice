@@ -9,7 +9,7 @@ class FreeList
     void *free_list_ = nullptr;
     void *tail_ = nullptr;
     int benchmark_ = 1; // 对于每个链表,都有自己申请对象个数的基准值
-    int size_ = 0;
+    int size_ = 0;      // 链表长度
 
 public:
     void push_front(void *ptr)
@@ -21,7 +21,6 @@ public:
             tail_ = ptr;
         }
         free_list_ = ptr;
-        ++size_;
     }
     void push_back(void *ptr)
     {
@@ -35,21 +34,26 @@ public:
             free_list_ = ptr;
         }
         tail_ = ptr;
-        ++size_;
     }
     void *pop()
     {
         assert(free_list_ != nullptr);
         void *ptr = free_list_;
         free_list_ = next(ptr); // 指向下一个结点
-        --size_;
         return ptr;
+    }
+    void clear()
+    {
+        free_list_ = nullptr;
+        tail_ = nullptr;
+        benchmark_ = 1;
+        size_ = 0;
     }
     inline bool empty() const
     {
         return free_list_ == nullptr;
     }
-    inline int size() const
+    inline int &size() // 针对分配给thread cache的内存块个数
     {
         return size_;
     }
@@ -85,6 +89,7 @@ class SpanList // 带头双向循环链表
     Span *head_ = nullptr; // 头结点
 public:
     static std::mutex mtx_;
+    static std::recursive_mutex rcs_mtx_;
 
 public:
     SpanList()
@@ -145,3 +150,4 @@ private:
     }
 };
 std::mutex SpanList::mtx_;
+std::recursive_mutex SpanList::rcs_mtx_;

@@ -18,7 +18,8 @@ public:
     }
     Span *obj_to_span(void *ptr)
     {
-        int page_id = ((helper::page_t)ptr) >> helper::PAGE_SHIFT;
+        helper::page_t page_id = ((helper::page_t)ptr) >> helper::PAGE_SHIFT;
+        std::unique_lock<std::mutex> lock(mtx_);
         if (page_to_span_.find(page_id) == page_to_span_.end())
         {
             return nullptr;
@@ -63,8 +64,8 @@ public:
                     page_to_span_[span->start_pageid_ + i] = span;
                 }
                 // newspan留在page cache,只需要被合并,所以首尾页映射即可
-                page_to_span_[span->start_pageid_] = newspan;
-                page_to_span_[span->start_pageid_ + span->n_ - 1] = newspan;
+                page_to_span_[newspan->start_pageid_] = newspan;
+                page_to_span_[newspan->start_pageid_ + newspan->n_ - 1] = newspan;
             }
             // 如果实在找不到span,向系统申请128页
             else
@@ -83,7 +84,7 @@ public:
     void recycle(Span *span)
     {
         // 合并
-        int page_id = span->start_pageid_ - 1;
+        helper::page_t page_id = span->start_pageid_ - 1;
         while (true) // 往前找
         {
             // 这里需要页号->span的映射关系
@@ -91,8 +92,10 @@ public:
             if (page_to_span_.find(page_id) != page_to_span_.end())
             {
                 Span *merged_span = page_to_span_[page_id];
+
                 // 存在但不一定处于空闲状态,该span现在不一定链接在page cache中
-                if (merged_span->is_use_ == false)
+                // 如果合并后>128页,就不要再合并了
+                if (merged_span->is_use_ == false && span->n_ + merged_span->n_ <= 128)
                 {
                     span->n_ += merged_span->n_;
                     span->start_pageid_ -= merged_span->n_;
@@ -113,7 +116,7 @@ public:
                 break;
             }
         }
-        page_id += span->n_;
+        page_id = span->start_pageid_ + span->n_;
         while (true) // 往后找
         {
             if (page_to_span_.find(page_id) != page_to_span_.end())

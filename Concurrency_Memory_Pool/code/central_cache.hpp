@@ -15,41 +15,57 @@ public:
     {
         return &instance_;
     }
-    void recycle(char *start, char *end, size_t size) // 拿回一串对象,挂在对应链表中
+    void recycle(FreeList &list, size_t size) // 拿回一串对象,挂在对应链表中
     {
-        assert(start != nullptr);
-        assert(end != nullptr);
-        assert(end != start);
         int bucket_id = helper::size_to_bucket(size);
-        while (start < end)
+        span_map_[bucket_id].mtx_.lock();
+        while (!list.empty())
         {
             // 挂到对应span下,更新已分配的个数
-            Span *span = Page_Cache::get_instance()->obj_to_span(start);
-            span->free_list_.push_front(start);
+            void *ptr = list.pop();
+            Span *span = Page_Cache::get_instance()->obj_to_span(ptr);
+            assert(span != nullptr);
+            span->free_list_.push_front(ptr);
             --span->use_count_;
-
-            start += size;
+          //  std::cout << "use count:" << span->use_count_ << std::endl;
 
             // 如果分配出去的都已收回,就将该span会回收到page cache
             if (span->use_count_ == 0)
             {
+                // 解除链接关系
+                span_map_[bucket_id].remove(span);
+                span->free_list_.clear();
+
+                span_map_[bucket_id].mtx_.unlock();
+             //   std::cout << "回收给page cache" << std::endl;
+
+                Page_Cache::get_instance()->mtx_.lock();
                 Page_Cache::get_instance()->recycle(span);
                 span->is_use_ = false; // 完成回收流程后,空闲
+                Page_Cache::get_instance()->mtx_.unlock();
+
+                span_map_[bucket_id].mtx_.lock();
             }
         }
+        span_map_[bucket_id].mtx_.unlock();
     }
-    int alloc(void *&start, void *&end, int id, int size) // 从链表中拿出一串
+    int alloc(void *&start, void *&end, int id, int size, int &benchmark) // 从链表中拿出一串
     {
+        // 这里得加递归锁
+        span_map_[id].rcs_mtx_.lock();
         // 判断链表中是否有非空span
         Span *span = span_map_[id].get_nonnull_span();
         if (span != nullptr) // span下有对象,能取多少取多少
         {
-            return alloc_obj(start, end, size, span);
+            int num = alloc_obj(start, end, size, span, benchmark);
+            span_map_[id].rcs_mtx_.unlock();
+            return num;
         }
         else // 向page cache取span,自己切对象,然后再取
         {
+            span_map_[id].rcs_mtx_.unlock(); // 在去往page cache前,先解掉桶锁,因为可能会有其他线程释放内存
             alloc_span(id, size);
-            return alloc(start, end, id, size);
+            return alloc(start, end, id, size, benchmark);
         }
     }
 
@@ -62,18 +78,17 @@ private:
     void alloc_span(int id, size_t size)
     {
         int page = helper::size_to_page(size);
+
         // 向page cache申请span
+        Page_Cache::get_instance()->mtx_.lock();
         Span *span = Page_Cache::get_instance()->alloc(page);
         assert(span != nullptr);
         span->is_use_ = true; // 因为会分配给central cache,处于正在使用状态
+        Page_Cache::get_instance()->mtx_.unlock();
 
         size_t space = span->n_ * (1 << helper::PAGE_SHIFT);               // 拥有的总空间大小
         char *start = (char *)(span->start_pageid_ << helper::PAGE_SHIFT); // 空间的起始地址
         char *end = start + space;
-        // 先切下来一个,方便后续尾插
-        span->free_list_.head() = start;
-        void *tail = start;
-        start += size;
 
         // 切分
         while (start < end) // 尾插
@@ -82,21 +97,22 @@ private:
             {
                 break;
             }
-            span->free_list_.next(tail) = start;
-            tail = start;
+            span->free_list_.push_back(start);
             start += size;
         }
-        span->free_list_.next(tail) = nullptr;
+        span->free_list_.next(start - size) = nullptr;
 
         // 将切分好的span链入到双向链表中
+        span_map_[id].mtx_.lock();
         span_map_[id].insert(span);
+        span_map_[id].mtx_.unlock();
     }
-    int alloc_obj(void *&start, void *&end, int size, Span *span)
+    int alloc_obj(void *&start, void *&end, int size, Span *span, int &benchmark)
     {
-        int num = std::min(span->free_list_.benchmark(), helper::feedback_regulation(size));
-        if (num == span->free_list_.benchmark()) // 说明被基准值限制了,增加1,直至与理论值相等
+        int num = std::min(benchmark, helper::feedback_regulation(size));
+        if (num == benchmark) // 说明被基准值限制了,增加1,直至与理论值相等
         {
-            ++span->free_list_.benchmark();
+            ++benchmark;
         }
         // 从非空span中拿出一段链表
         start = span->free_list_.pop(); // 已经至少拿出了一个结点
