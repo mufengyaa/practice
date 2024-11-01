@@ -8,8 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # 添加可执行文件
-add_executable(test_Fixed_length test_Fixed_length.cpp)
+add_executable(test_alloc test_alloc.cpp)
 
-target_link_libraries(test_Fixed_length) 
+target_link_libraries(test_alloc) 
 
 #cmake -DCMAKE_BUILD_TYPE=Release ../code
