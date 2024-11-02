@@ -20,8 +20,9 @@ CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 //Path to a program.
 CMAKE_AR:FILEPATH=/usr/bin/ar
 
-//No help, variable specified on the command line.
-CMAKE_BUILD_TYPE:STRING=Debug
+//Choose the type of build, options are: None Debug Release RelWithDebInfo
+// MinSizeRel ...
+CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -231,6 +232,9 @@ Concurrency_Memory_Pool_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 Concurrency_Memory_Pool_SOURCE_DIR:STATIC=/home/mufeng/c++/Concurrency_Memory_Pool/code
+
+//Path to a library.
+GPERFTOOLS_LIBRARIES:FILEPATH=/usr/lib/x86_64-linux-gnu/libprofiler.so
 
 
 ########################

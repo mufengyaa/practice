@@ -166,7 +166,7 @@ void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
                 v.clear();
 
                 malloc_costtime += (end1 - begin1);
-                free_costtime += (end2 - begin2);
+               free_costtime += (end2 - begin2);
             } });
     }
 
@@ -189,12 +189,13 @@ void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
 
 void test_time()
 {
-    size_t n = 1000;
+    size_t n = 50;
+    int thread_num = 6;
+    int m = 100;
     std::cout << "==========================================================" << std::endl;
-    BenchmarkConcurrentMalloc(n, 4, 10);
-    //std::cout << std::endl << std::endl;
-
-    BenchmarkMalloc(n, 4, 10);
+    BenchmarkMalloc(n, thread_num, m);
+    std::cout << std::endl;
+    BenchmarkConcurrentMalloc(n, thread_num, m);
     std::cout << "==========================================================" << std::endl;
 }
 

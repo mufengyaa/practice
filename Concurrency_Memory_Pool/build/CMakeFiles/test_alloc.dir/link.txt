@@ -1,1 +1,1 @@
-/usr/bin/g++ -g CMakeFiles/test_alloc.dir/test_alloc.cpp.o -o test_alloc 
+/usr/bin/g++ -O3 CMakeFiles/test_alloc.dir/test_alloc.cpp.o -o test_alloc  -lpthread 

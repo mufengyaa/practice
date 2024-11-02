@@ -14,7 +14,8 @@ class FreeList
 public:
     void push_front(void *ptr)
     {
-        // 头插
+        if (ptr == nullptr)
+            return; // 检查有效性
         next(ptr) = free_list_;
         if (free_list_ == nullptr)
         {
@@ -24,20 +25,26 @@ public:
     }
     void push_back(void *ptr)
     {
-        // 尾插
+        if (ptr == nullptr)
+            return; // 检查有效性
         if (tail_ != nullptr)
         {
             next(tail_) = ptr;
         }
-        if (free_list_ == nullptr)
+        else // 如果链表为空
         {
-            free_list_ = ptr;
+            free_list_ = ptr; // 新节点成为头节点
         }
-        tail_ = ptr;
+        tail_ = ptr; // 更新尾指针
     }
+
     void *pop()
     {
         assert(free_list_ != nullptr);
+        // if (free_list_ == nullptr)
+        // {
+        //     int x = 1;
+        // }
         void *ptr = free_list_;
         free_list_ = next(ptr); // 指向下一个结点
         return ptr;
@@ -46,7 +53,6 @@ public:
     {
         free_list_ = nullptr;
         tail_ = nullptr;
-        benchmark_ = 1;
         size_ = 0;
     }
     inline bool empty() const
@@ -89,7 +95,6 @@ class SpanList // 带头双向循环链表
     Span *head_ = nullptr; // 头结点
 public:
     static std::mutex mtx_;
-    static std::recursive_mutex rcs_mtx_;
 
 public:
     SpanList()
@@ -120,6 +125,9 @@ public:
         Span *prev = pos->prev_;
         prev->next_ = next;
         next->prev_ = prev;
+
+        pos->next_ = nullptr;
+        pos->prev_ = nullptr;
     }
     Span *get_nonnull_span()
     {
@@ -150,4 +158,3 @@ private:
     }
 };
 std::mutex SpanList::mtx_;
-std::recursive_mutex SpanList::rcs_mtx_;

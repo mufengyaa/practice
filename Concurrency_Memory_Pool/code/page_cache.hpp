@@ -20,11 +20,12 @@ public:
     {
         helper::page_t page_id = ((helper::page_t)ptr) >> helper::PAGE_SHIFT;
         std::unique_lock<std::mutex> lock(mtx_);
-        if (page_to_span_.find(page_id) == page_to_span_.end())
+        auto ret = page_to_span_.find(page_id);
+        if (ret == page_to_span_.end())
         {
             return nullptr;
         }
-        return page_to_span_[page_id];
+        return ret->second;
     }
     Span *alloc(int page)
     {
@@ -33,6 +34,12 @@ public:
         if (!span_map_[page].empty())
         {
             span = span_map_[page].pop_front();
+            // 建立好每页的映射
+            for (int i = 0; i < span->n_; ++i)
+            {
+                page_to_span_[span->start_pageid_ + i] = span;
+            }
+            return span;
         }
         // 继续往下找
         else
@@ -49,8 +56,13 @@ public:
             // 找到了就切分成两个span
             if (span != nullptr)
             {
-                Span *newspan = new Span;
+                // 移除即将被切分的大span
+                span_map_[span->n_].remove(span);
+                page_to_span_.erase(span->start_pageid_);
+                page_to_span_.erase(span->start_pageid_ + span->n_ - 1);
+
                 // 大span的前page个页属于分配出去的span,剩下的部分链入到对应位置
+                Span *newspan = new Span;
                 newspan->n_ = span->n_ - page;
                 newspan->start_pageid_ = span->start_pageid_ + page;
                 span_map_[newspan->n_].insert(newspan);
@@ -76,10 +88,13 @@ public:
                 span->n_ = helper::MAX_PAGE_NUM;
                 span->start_pageid_ = helper::ptr_to_pageid(ptr);
                 span_map_[span->n_].insert(span);
+                page_to_span_[span->start_pageid_] = span;
+                page_to_span_[span->start_pageid_ + span->n_ - 1] = span;
                 return alloc(page);
             }
             return span;
         }
+        return nullptr;
     }
     void recycle(Span *span)
     {
@@ -99,10 +114,11 @@ public:
                 {
                     span->n_ += merged_span->n_;
                     span->start_pageid_ -= merged_span->n_;
-                    page_id -= merged_span->n_;
+                    page_id = span->start_pageid_ - 1;
 
                     // 解除[被合并的页]和其他结构的关系,并释放span
-                    page_to_span_.erase(page_id);
+                    page_to_span_.erase(merged_span->start_pageid_);
+                    page_to_span_.erase(merged_span->start_pageid_ + merged_span->n_ - 1);
                     span_map_[merged_span->n_].remove(merged_span);
                     delete merged_span;
                 }
@@ -128,7 +144,8 @@ public:
                     page_id += merged_span->n_;
 
                     // 解除[被合并的页]和其他结构的关系,并释放span
-                    page_to_span_.erase(page_id);
+                    page_to_span_.erase(merged_span->start_pageid_);
+                    page_to_span_.erase(merged_span->start_pageid_ + merged_span->n_ - 1);
                     span_map_[merged_span->n_].remove(merged_span);
                     delete merged_span;
                 }
