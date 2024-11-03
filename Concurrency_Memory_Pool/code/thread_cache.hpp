@@ -1,3 +1,5 @@
+#pragma once
+
 #include "helper.hpp"
 #include "list.hpp"
 #include "central_cache.hpp"

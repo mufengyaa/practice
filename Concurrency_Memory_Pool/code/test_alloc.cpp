@@ -75,7 +75,7 @@ void TestMultiThread()
     t2.join();
 }
 
-void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)
+void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds, size_t size)
 {
     std::vector<std::thread> vthread(nworks);
     std::atomic<size_t> malloc_costtime;
@@ -95,14 +95,14 @@ void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)
         auto begin1 = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < ntimes; i++)
         {
-            v.push_back(concurrent_alloc(16));
+            v.push_back(malloc(size));
         }
         auto end1 = std::chrono::high_resolution_clock::now();
 
         auto begin2 = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < ntimes; i++)
         {
-            concurrent_free(v[i], 16);
+            free(v[i]);
         }
         auto end2 = std::chrono::high_resolution_clock::now();
         v.clear();
@@ -131,7 +131,7 @@ void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)
 // 假设有 concurrent_alloc 和 concurrent_free 函数定义
 
 // 单轮次申请释放次数 线程数 轮次
-void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
+void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds, size_t size)
 {
     std::vector<std::thread> vthread(nworks);
     std::atomic<size_t> malloc_costtime;
@@ -151,14 +151,14 @@ void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
     auto begin1 = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < ntimes; i++)
     {
-        v.push_back(concurrent_alloc(16));
+        v.push_back(concurrent_alloc(size));
     }
     auto end1 = std::chrono::high_resolution_clock::now();
 
     auto begin2 = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < ntimes; i++)
     {
-        concurrent_free(v[i], 16);
+        concurrent_free(v[i], size);
     }
     auto end2 = std::chrono::high_resolution_clock::now();
     v.clear();
@@ -187,13 +187,15 @@ void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
 
 void test_time()
 {
-    size_t n = 500;
-    int thread_num = 10;
+    size_t n = 100;
+    int thread_num = 2;
     int m = 100;
+
+    const int size = 129 << helper::PAGE_SHIFT; // 256kb以上 / 128页以上
     std::cout << "==========================================================" << std::endl;
-    BenchmarkMalloc(n, thread_num, m);
+    //BenchmarkMalloc(n, thread_num, m, size);
     std::cout << std::endl;
-    BenchmarkConcurrentMalloc(n, thread_num, m);
+    BenchmarkConcurrentMalloc(n, thread_num, m, size);
     std::cout << "==========================================================" << std::endl;
 }
 

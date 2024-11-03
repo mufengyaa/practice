@@ -51,6 +51,14 @@ namespace helper
         }
         return ptr;
     }
+    void release_memory(void *ptr, size_t page)
+    {
+        if (munmap(ptr, page << PAGE_SHIFT) == -1) // 释放内存
+        {
+            std::cerr << "Memory release failed: " << strerror(errno) << std::endl;
+            exit(1);
+        }
+    }
 // 判断是32位还是64位的Linux
 #if defined(__x86_64__) || defined(_M_X64)
     using page_t = unsigned long long; // 64位系统
@@ -64,6 +72,7 @@ namespace helper
 #error "Unsupported platform"
 #endif
 
+    static const int THREAD_CACHE_MAX_SIZE = 256 << 10; // 256KB
     static const int PTR_SIZE = sizeof(void *);
     static const int BUCKET_SIZE = 208;
     static int BASIC_BUCKETS_SIZE[5] = {0, 128, 1024, 8 * 1024, 64 * 1024};
@@ -98,6 +107,10 @@ namespace helper
     {
         page_t page_id = ((page_t)ptr) >> PAGE_SHIFT;
         return page_id;
+    }
+    void *pageid_to_ptr(page_t page_id)
+    {
+        return (void *)(page_id << PAGE_SHIFT);
     }
     int alignment(size_t size, int &i) // 以字节为单位
     {

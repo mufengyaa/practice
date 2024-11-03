@@ -1,11 +1,14 @@
+#pragma once
+
 #include "helper.hpp"
 #include "list.hpp"
 #include <unordered_map>
+#include <map>
 
 class Page_Cache
 {
     static Page_Cache instance_;
-    std::unordered_map<helper::page_t, Span *> page_to_span_;
+    std::map<helper::page_t, Span *> page_to_span_;
     SpanList span_map_[helper::MAX_PAGE_NUM + 1];
 
 public:
@@ -29,6 +32,16 @@ public:
     }
     Span *alloc(int page)
     {
+        if (page > 128) // 直接向堆申请
+        {
+            void *ptr = helper::allocate_memory(page);
+            // 创建并初始化span
+            Span *span = new Span;
+            span->n_ = page;
+            span->start_pageid_ = helper::ptr_to_pageid(ptr);
+            page_to_span_[span->start_pageid_] = span; // 用于在释放的时候拿到span结构,来确定分配的空间大小
+            return span;
+        }
         Span *span = nullptr;
         // 当前有对应页的span
         if (!span_map_[page].empty())
@@ -48,7 +61,7 @@ public:
             {
                 if (!span_map_[i].empty())
                 {
-                    span = span_map_[i].pop_front();
+                    span = span_map_[i].pop_front(); // 移除即将被切分的大span
                     break;
                 }
             }
@@ -56,8 +69,6 @@ public:
             // 找到了就切分成两个span
             if (span != nullptr)
             {
-                // 移除即将被切分的大span
-                // span_map_[span->n_].remove(span);
                 page_to_span_.erase(span->start_pageid_);
                 page_to_span_.erase(span->start_pageid_ + span->n_ - 1);
 
@@ -98,6 +109,14 @@ public:
     }
     void recycle(Span *span)
     {
+        if (span->n_ > 128)
+        {
+            void *ptr = helper::pageid_to_ptr(span->start_pageid_);
+            page_to_span_.erase(span->start_pageid_);
+            helper::release_memory(ptr, span->n_);
+            delete span;
+            return;
+        }
         // 合并
         helper::page_t page_id = span->start_pageid_ - 1;
         while (true) // 往前找
@@ -138,7 +157,7 @@ public:
             if (page_to_span_.find(page_id) != page_to_span_.end())
             {
                 Span *merged_span = page_to_span_[page_id];
-                if (merged_span->is_use_ == false)
+                if (merged_span->is_use_ == false && span->n_ + merged_span->n_ <= 128)
                 {
                     span->n_ += merged_span->n_;
                     page_id += merged_span->n_;

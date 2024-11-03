@@ -94,7 +94,6 @@ struct Span
     size_t start_pageid_ = 0;
     FreeList free_list_;
 
-    // 内部以双向循环链表结构组织起来
     Span *next_ = nullptr;
     Span *prev_ = nullptr;
 
@@ -128,6 +127,7 @@ public:
         Span *r_node = begin();
         if (r_node == head_)
         {
+            assert(false);
             return nullptr;
         }
         head_->next_ = r_node->next_;
