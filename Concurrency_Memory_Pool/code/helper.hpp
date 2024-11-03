@@ -132,7 +132,11 @@ namespace helper
     }
     inline size_t Round_up(size_t size, size_t align_num) // 向上取整
     {
-        // return ((size / align_num + 1) * align_num);
+        // if (size % align_num != 0)
+        // {
+        //     return ((size / align_num + 1) * align_num);
+        // }
+        // return size;
         return ((size + align_num - 1) & ~(align_num - 1));
     }
     int size_to_bucket(size_t size) // 映射到哪个桶

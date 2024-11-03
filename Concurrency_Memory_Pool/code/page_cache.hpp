@@ -57,7 +57,7 @@ public:
             if (span != nullptr)
             {
                 // 移除即将被切分的大span
-                span_map_[span->n_].remove(span);
+                // span_map_[span->n_].remove(span);
                 page_to_span_.erase(span->start_pageid_);
                 page_to_span_.erase(span->start_pageid_ + span->n_ - 1);
 

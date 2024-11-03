@@ -6,6 +6,7 @@
 
 class FreeList
 {
+public:
     void *free_list_ = nullptr;
     void *tail_ = nullptr;
     int benchmark_ = 1; // 对于每个链表,都有自己申请对象个数的基准值
@@ -38,15 +39,24 @@ public:
         tail_ = ptr; // 更新尾指针
     }
 
-    void *pop()
+    void *pop() // 头删
     {
         assert(free_list_ != nullptr);
-        // if (free_list_ == nullptr)
-        // {
-        //     int x = 1;
-        // }
+        if (free_list_ == nullptr)
+        {
+            int x = 1;
+        }
+        if (next(free_list_) == nullptr)
+        {
+            int x = 1;
+        }
         void *ptr = free_list_;
-        free_list_ = next(ptr); // 指向下一个结点
+        free_list_ = next(free_list_); // 指向下一个结点
+        next(ptr) = nullptr;
+        if (free_list_ == nullptr)
+        {
+            tail_ = nullptr;
+        }
         return ptr;
     }
     void clear()
@@ -55,9 +65,10 @@ public:
         tail_ = nullptr;
         size_ = 0;
     }
-    inline bool empty() const
+    bool empty()
     {
-        return free_list_ == nullptr;
+        bool ret = nullptr == free_list_;
+        return ret;
     }
     inline int &size() // 针对分配给thread cache的内存块个数
     {
@@ -115,12 +126,20 @@ public:
     Span *pop_front() // 头删
     {
         Span *r_node = begin();
+        if (r_node == head_)
+        {
+            return nullptr;
+        }
         head_->next_ = r_node->next_;
         r_node->next_->prev_ = head_;
         return r_node;
     }
     void remove(Span *pos) // 指定位置删除
     {
+        if (pos == head_)
+        {
+            assert(false);
+        }
         Span *next = pos->next_;
         Span *prev = pos->prev_;
         prev->next_ = next;
@@ -131,14 +150,14 @@ public:
     }
     Span *get_nonnull_span()
     {
-        Span *head = head_;
-        while (head != end())
+        Span *head = head_, *node = head->next_;
+        while (node != head)
         {
-            head = head->next_;
-            if (!(head->free_list_).empty())
+            if (node->free_list_.free_list_ != nullptr)
             {
-                return head;
+                return node;
             }
+            node = node->next_;
         }
         return nullptr;
     }

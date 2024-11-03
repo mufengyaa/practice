@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # 添加可执行文件
 add_executable(test_alloc test_alloc.cpp)
+add_executable(fl_test test_Fixed_length.cpp)
 
 # 链接 pthread 和 gperftools 库
 target_link_libraries(test_alloc pthread)

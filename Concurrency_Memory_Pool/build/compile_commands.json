@@ -3,5 +3,10 @@
   "directory": "/home/mufeng/c++/Concurrency_Memory_Pool/build",
   "command": "/usr/bin/g++   -O3 -std=gnu++11 -o CMakeFiles/test_alloc.dir/test_alloc.cpp.o -c /home/mufeng/c++/Concurrency_Memory_Pool/code/test_alloc.cpp",
   "file": "/home/mufeng/c++/Concurrency_Memory_Pool/code/test_alloc.cpp"
+},
+{
+  "directory": "/home/mufeng/c++/Concurrency_Memory_Pool/build",
+  "command": "/usr/bin/g++   -O3 -std=gnu++11 -o CMakeFiles/fl_test.dir/test_Fixed_length.cpp.o -c /home/mufeng/c++/Concurrency_Memory_Pool/code/test_Fixed_length.cpp",
+  "file": "/home/mufeng/c++/Concurrency_Memory_Pool/code/test_Fixed_length.cpp"
 }
 ]

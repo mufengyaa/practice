@@ -54,11 +54,10 @@ public:
 
     int alloc(void *&start, void *&end, int id, int size, int &benchmark) // 分配对象
     {
-        Span *span = get_nonnull_span(id, size);
-
-        // 要操作某条span链表了
         std::unique_lock<std::mutex> lock(span_map_[id].mtx_);
+        Span *span = get_nonnull_span(lock, id, size);
         int num = alloc_obj(start, end, size, span, benchmark);
+
         return num;
     }
 
@@ -67,18 +66,16 @@ private:
     ~Central_Cache() {}
     Central_Cache(const Central_Cache &) = delete;
     Central_Cache &operator=(const Central_Cache &) = delete;
-    Span *get_nonnull_span(int id, size_t size)
+    Span *get_nonnull_span(std::unique_lock<std::mutex> &lock, int id, size_t size)
     {
-        span_map_[id].mtx_.lock();
         Span *span = span_map_[id].get_nonnull_span();
-        span_map_[id].mtx_.unlock();
         if (span != nullptr)
         {
             return span;
         }
         else // 没有span就去page cache里要
         {
-            span = alloc_page_cache(id, size);
+            span = alloc_page_cache(lock, id, size);
             // 切分成若干个对象
             size_t space = span->n_ << helper::PAGE_SHIFT;
             char *start = (char *)(span->start_pageid_ << helper::PAGE_SHIFT);
@@ -97,24 +94,24 @@ private:
             span->free_list_.next(start - size) = nullptr;
 
             // 插入到central cache结构中
-            span_map_[id].mtx_.lock();
             span_map_[id].insert(span);
-            span_map_[id].mtx_.unlock();
 
             return span;
         }
     }
 
-    Span *alloc_page_cache(int id, size_t size)
+    Span *alloc_page_cache(std::unique_lock<std::mutex> &lock, int id, size_t size)
     {
         int page = helper::size_to_page(size);
 
         // 向page cache获取span
+        lock.unlock();
         Page_Cache::get_instance()->mtx_.lock();
         Span *span = Page_Cache::get_instance()->alloc(page);
         assert(span != nullptr);
         span->is_use_ = true;
         Page_Cache::get_instance()->mtx_.unlock();
+        lock.lock();
         return span;
     }
 
@@ -131,12 +128,13 @@ private:
         // 首先获取一个
         start = span->free_list_.pop();
         end = start;
-        int i = 0, real_num = 1;
+        int j = 0;
+        int real_num = 1;
         // 获取后续结点
-        while (i < num - 1 && !span->free_list_.empty())
+        while (j < num - 1 && !span->free_list_.empty())
         {
             end = span->free_list_.pop();
-            ++i;
+            ++j;
             ++real_num;
         }
         span->free_list_.next(end) = nullptr;

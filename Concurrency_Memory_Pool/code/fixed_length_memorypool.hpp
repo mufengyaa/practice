@@ -25,13 +25,13 @@ public:
             if (remain_space_ < sizeof(T))
             {
                 const int proportion = 2;
-                space_ = static_cast<char *>(allocate_memory(sizeof(T) / proportion));
-                remain_space_ = (sizeof(T) / proportion) << PAGE_SHIFT;
+                space_ = static_cast<char *>(helper::allocate_memory(sizeof(T) / proportion));
+                remain_space_ = (sizeof(T) / proportion) << helper::PAGE_SHIFT;
             }
 
             // 空间足够
             // 对齐到指针大小
-            size_t object_size = sizeof(T) < PTR_SIZE ? PTR_SIZE : sizeof(T);
+            size_t object_size = sizeof(T) < helper::PTR_SIZE ? helper::PTR_SIZE : sizeof(T);
             // 开始切分
             obj = (T *)space_;
             space_ += object_size;
@@ -45,6 +45,6 @@ public:
     {
         assert(obj != nullptr);
         obj->~T();
-        free_list_.push(obj);
+        free_list_.push_front(obj);
     }
 };

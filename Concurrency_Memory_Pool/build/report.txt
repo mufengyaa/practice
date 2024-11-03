@@ -1,0 +1,38 @@
+--------------------------------------------------------------------------------
+Profile data file 'callgrind.out.356071' (creator: callgrind-3.18.1)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 153138213
+Trigger: Program termination
+Profiled target:  ./test_alloc (PID 356071, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                   
+--------------------------------------------------------------------------------
+481,471,219 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                    file:function
+--------------------------------------------------------------------------------
+441,790,045 (91.76%)  ???:std::thread::_State_impl<std::thread::_Invoker<std::tuple<BenchmarkConcurrentMalloc(unsigned long, unsigned long, unsigned long)::{lambda()#1}> > >::_M_run() [/home/mufeng/c++/Concurrency_Memory_Pool/build/test_alloc]
+ 18,539,593 ( 3.85%)  ???:Thread_Cache::dealloc(void*, unsigned long) [/home/mufeng/c++/Concurrency_Memory_Pool/build/test_alloc]
+  9,227,433 ( 1.92%)  ./nptl/./nptl/pthread_mutex_lock.c:pthread_mutex_lock@@GLIBC_2.2.5 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+  6,327,454 ( 1.31%)  ./nptl/./nptl/pthread_mutex_unlock.c:pthread_mutex_unlock@@GLIBC_2.2.5 [/usr/lib/x86_64-linux-gnu/libc.so.6]
+    985,410 ( 0.20%)  ./elf/./elf/dl-lookup.c:_dl_lookup_symbol_x [/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2]
+
+--------------------------------------------------------------------------------
+The following files chosen for auto-annotation could not be found:
+--------------------------------------------------------------------------------
+  ./elf/./elf/dl-lookup.c
+  ./nptl/./nptl/pthread_mutex_lock.c
+  ./nptl/./nptl/pthread_mutex_unlock.c
+

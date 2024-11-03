@@ -1,6 +1,11 @@
+
+#include <iostream>
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <ctime>
+#include <chrono>
+
 #include "concurrent.hpp"
 
 void TestConcurrentAlloc1()
@@ -85,27 +90,26 @@ void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)
 			std::vector<void*> v;
 			v.reserve(ntimes);
 
-			for (size_t j = 0; j < rounds; ++j)
-			{
-				size_t begin1 = clock();
-				for (size_t i = 0; i < ntimes; i++)
-				{
-					v.push_back(malloc(16));
-					//v.push_back(malloc((16 + i) % 8192 + 1));
-				}
-				size_t end1 = clock();
+			 for (size_t j = 0; j < rounds; ++j)
+    {
+        auto begin1 = std::chrono::high_resolution_clock::now();
+        for (size_t i = 0; i < ntimes; i++)
+        {
+            v.push_back(concurrent_alloc(16));
+        }
+        auto end1 = std::chrono::high_resolution_clock::now();
 
-				size_t begin2 = clock();
-				for (size_t i = 0; i < ntimes; i++)
-				{
-					free(v[i]);
-				}
-				size_t end2 = clock();
-				v.clear();
+        auto begin2 = std::chrono::high_resolution_clock::now();
+        for (size_t i = 0; i < ntimes; i++)
+        {
+            concurrent_free(v[i], 16);
+        }
+        auto end2 = std::chrono::high_resolution_clock::now();
+        v.clear();
 
-				malloc_costtime += (end1 - begin1);
-				free_costtime += (end2 - begin2);
-			} });
+        malloc_costtime += std::chrono::duration_cast<std::chrono::milliseconds>(end1 - begin1).count();
+        free_costtime += std::chrono::duration_cast<std::chrono::milliseconds>(end2 - begin2).count();
+    } });
     }
 
     for (auto &t : vthread)
@@ -123,12 +127,6 @@ void BenchmarkMalloc(size_t ntimes, size_t nworks, size_t rounds)
     printf("%u个线程并发malloc&free %u次,总计花费：%u ms\n",
            nworks, nworks * rounds * ntimes, malloc_time + free_time);
 }
-
-#include <iostream>
-#include <vector>
-#include <thread>
-#include <atomic>
-#include <ctime>
 
 // 假设有 concurrent_alloc 和 concurrent_free 函数定义
 
@@ -149,25 +147,25 @@ void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
             v.reserve(ntimes);
 
             for (size_t j = 0; j < rounds; ++j)
-            {
-                size_t begin1 = clock();
-                for (size_t i = 0; i < ntimes; i++)
-                {
-                    v.push_back(concurrent_alloc(16));
-                }
-                size_t end1 = clock();
+{
+    auto begin1 = std::chrono::high_resolution_clock::now();
+    for (size_t i = 0; i < ntimes; i++)
+    {
+        v.push_back(concurrent_alloc(16));
+    }
+    auto end1 = std::chrono::high_resolution_clock::now();
 
-                size_t begin2 = clock();
-                for (size_t i = 0; i < ntimes; i++)
-                {
-                    concurrent_free(v[i], 16);
-                }
-                size_t end2 = clock();
-                v.clear();
+    auto begin2 = std::chrono::high_resolution_clock::now();
+    for (size_t i = 0; i < ntimes; i++)
+    {
+        concurrent_free(v[i], 16);
+    }
+    auto end2 = std::chrono::high_resolution_clock::now();
+    v.clear();
 
-                malloc_costtime += (end1 - begin1);
-               free_costtime += (end2 - begin2);
-            } });
+    malloc_costtime += std::chrono::duration_cast<std::chrono::milliseconds>(end1 - begin1).count();
+    free_costtime += std::chrono::duration_cast<std::chrono::milliseconds>(end2 - begin2).count();
+} });
     }
 
     for (auto &t : vthread)
@@ -189,8 +187,8 @@ void BenchmarkConcurrentMalloc(size_t ntimes, size_t nworks, size_t rounds)
 
 void test_time()
 {
-    size_t n = 50;
-    int thread_num = 6;
+    size_t n = 500;
+    int thread_num = 10;
     int m = 100;
     std::cout << "==========================================================" << std::endl;
     BenchmarkMalloc(n, thread_num, m);
